@@ -1,0 +1,1167 @@
+<!doctype html>
+<!--
+  ╔═══════════════════════════════════════════════════════════════════════╗
+  ║  DESIGN.md — Showcase HTML Template                                   ║
+  ║                                                                       ║
+  ║  Working scaffold for any brand. Replace every "BRAND-SPECIFIC"       ║
+  ║  marker with values from the new brand's DESIGN.md frontmatter.       ║
+  ║  See references/showcase-format.md for the substitution checklist.    ║
+  ║                                                                       ║
+  ║  This template renders standalone with neutral placeholder content    ║
+  ║  so you can verify the structure before adapting it.                  ║
+  ╚═══════════════════════════════════════════════════════════════════════╝
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BRAND NAME — Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- BRAND-SPECIFIC: rebuild Google Fonts URL from brand's typography families & weights -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* ═══════════ BRAND-SPECIFIC: replace every value below with the brand's ═══════════
+     ═══════════ frontmatter tokens (1:1 mapping with DESIGN.md `colors:`) ═══════════ */
+
+  /* Brand voltage */
+  --primary:#6CC7FF;
+  --primary-hover:#88D2FF;
+  --primary-active:#4AB0EC;
+  --primary-disabled:#1F4258;
+  --on-primary:#0C0D10;
+
+  /* Text */
+  --ink:#F5F5F7;
+  --ink-muted:#B0B3BD;
+  --ink-subtle:#7A7E8A;
+  --ink-tertiary:#555964;
+
+  /* Surface */
+  --canvas:#0C0D10;
+  --surface-1:#16181D;
+  --surface-2:#1C1F26;
+  --surface-3:#232730;
+
+  /* Borders */
+  --hairline:#20232B;
+  --hairline-strong:#2A2E38;
+
+  /* Semantic */
+  --success:#4ADE80;
+  --warning:#FBBF24;
+  --error:#F87171;
+
+  /* Gradient */
+  --gradient-from:#4AB0EC;
+  --gradient-to:#6CC7FF;
+
+  /* Inverse */
+  --inverse-canvas:#F5F5F7;
+  --inverse-ink:#0C0D10;
+
+  /* Radius */
+  --r-xs:4px; --r-sm:6px; --r-md:8px; --r-lg:12px; --r-xl:16px; --r-pill:9999px;
+
+  /* Spacing */
+  --xxs:4px; --xs:8px; --sm:12px; --md:16px; --lg:24px; --xl:32px;
+  --xxl:48px; --xxxl:64px; --section:96px; --hero:128px;
+
+  /* Families — replace with brand's display, body, mono families */
+  --display:'Sora',system-ui,sans-serif;
+  --body:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--canvas);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+a{color:inherit;text-decoration:none}
+
+.mono{font-family:var(--mono)}
+
+/* ========= LAYOUT ========= */
+.container{max-width:1280px;margin:0 auto;padding:0 32px}
+.section{padding:80px 0;border-top:1px solid var(--hairline)}
+.section:first-of-type{border-top:none}
+
+.sec-num{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-subtle);margin-bottom:18px}
+.sec-title{font-family:var(--display);font-weight:800;font-size:48px;line-height:1.05;letter-spacing:-1px;text-transform:uppercase;margin-bottom:18px}
+.sec-desc{color:var(--ink-muted);font-size:15px;line-height:1.65;max-width:720px;margin-bottom:48px}
+.sub-label{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink);margin-bottom:18px;display:block}
+@media (max-width: 700px){ .sec-title{font-size:32px;letter-spacing:-0.6px} }
+
+/* ========= TOP NAV ========= */
+.topnav{position:sticky;top:0;z-index:50;backdrop-filter:saturate(140%) blur(12px);background:rgba(12,13,16,0.85);border-bottom:1px solid var(--hairline)}
+.topnav-inner{display:flex;align-items:center;justify-content:space-between;height:56px;max-width:1280px;margin:0 auto;padding:0 32px}
+.topnav-left{display:flex;align-items:center;gap:24px}
+.brand-name{font-family:var(--display);font-weight:700;font-size:14px;color:var(--ink);letter-spacing:.5px}
+.badge-src{font-family:var(--mono);font-size:11px;color:var(--ink-muted);padding:4px 10px;background:var(--surface-1);border:1px solid var(--hairline-strong);border-radius:var(--r-md);display:inline-flex;align-items:center;gap:6px}
+.badge-src::before{content:"●";color:var(--primary);font-size:9px}
+.nav-links{display:flex;gap:24px}
+.nav-links a{color:var(--ink-muted);font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.5px;transition:color .15s ease}
+.nav-links a:hover{color:var(--ink)}
+@media (max-width: 800px){ .nav-links{display:none} }
+
+/* ========= BUTTONS ========= */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--body);font-weight:600;font-size:13px;line-height:1;letter-spacing:1px;text-transform:uppercase;border:1px solid transparent;cursor:pointer;transition:all .15s ease;padding:14px 26px;border-radius:var(--r-md)}
+.btn-primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+.btn-primary:active{background:var(--primary-active);border-color:var(--primary-active)}
+.btn-primary.is-disabled{background:var(--primary-disabled);color:var(--ink-tertiary);border-color:var(--primary-disabled);cursor:not-allowed}
+.btn-secondary{background:var(--surface-1);color:var(--ink);border-color:var(--hairline-strong)}
+.btn-secondary:hover{background:var(--surface-2)}
+.btn-ghost{background:transparent;color:var(--ink);border-color:transparent}
+.btn-ghost:hover{background:var(--surface-1)}
+.btn-icon{width:40px;height:40px;padding:0;background:var(--surface-1);color:var(--primary);border-color:var(--hairline-strong)}
+.btn-icon:hover{background:var(--surface-2)}
+
+/* ========= HERO ========= */
+.hero{padding:48px 0 80px}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+@media (max-width: 1000px){ .hero-grid{grid-template-columns:1fr} }
+.stripes{display:flex;height:3px;overflow:hidden}
+.stripes span{flex:1;height:100%}
+.hero .stripes{margin-bottom:28px;max-width:600px}
+.hero h1{font-family:var(--display);font-weight:800;font-size:72px;line-height:1.0;letter-spacing:-2px;text-transform:uppercase}
+.hero .lede{margin-top:24px;color:var(--ink-muted);font-size:16px;line-height:1.65;max-width:560px}
+.hero .cta-row{margin-top:36px;display:flex;gap:12px;flex-wrap:wrap}
+.hero-canvas{position:relative;background:var(--canvas);min-height:380px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-top:3px solid transparent;border-bottom:3px solid transparent}
+.hero-canvas .stripes{position:absolute;left:0;right:0;width:100%;max-width:none}
+.hero-canvas .stripes.top{top:0}
+.hero-canvas .stripes.bottom{bottom:0}
+.hero-canvas .ambient{position:absolute;inset:0;background:radial-gradient(800px 360px at 50% 50%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 60%);pointer-events:none}
+.hero-canvas .symbol{position:relative;z-index:2}
+.hero-canvas .symbol svg{width:140px;height:auto;filter:drop-shadow(0 0 32px color-mix(in srgb, var(--primary) 45%, transparent))}
+@media (max-width: 1100px){ .hero h1{font-size:56px} }
+@media (max-width: 600px){ .hero h1{font-size:38px;letter-spacing:-1px} }
+
+/* ========= SWATCHES ========= */
+.swatch-grid{display:grid;grid-template-columns:repeat(4, 1fr);gap:0;border-top:1px solid var(--hairline);border-left:1px solid var(--hairline)}
+@media (max-width: 1000px){ .swatch-grid{grid-template-columns:repeat(3, 1fr)} }
+@media (max-width: 700px){ .swatch-grid{grid-template-columns:repeat(2, 1fr)} }
+.swatch-grid.cols-5{grid-template-columns:repeat(5, 1fr)}
+@media (max-width: 1100px){ .swatch-grid.cols-5{grid-template-columns:repeat(3, 1fr)} }
+@media (max-width: 700px){ .swatch-grid.cols-5{grid-template-columns:repeat(2, 1fr)} }
+.swatch{background:var(--surface-1);border-right:1px solid var(--hairline);border-bottom:1px solid var(--hairline);display:flex;flex-direction:column}
+.swatch-color{height:140px}
+.swatch-meta{padding:18px 18px 24px}
+.swatch-meta .name{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:1.3px;text-transform:uppercase;margin-bottom:5px;color:var(--ink)}
+.swatch-meta .hex{font-family:var(--mono);font-size:12px;color:var(--ink-muted);margin-bottom:10px}
+.swatch-meta .role{color:var(--ink-muted);font-size:13px;line-height:1.55}
+
+.signature-stripe{display:flex;height:6px;margin-bottom:18px;overflow:hidden}
+.signature-stripe span{flex:1}
+
+.color-group{margin-bottom:48px}
+.color-group:last-child{margin-bottom:0}
+
+.proportion{margin-top:48px;background:var(--surface-1);border:1px solid var(--hairline-strong);padding:24px}
+.proportion h4{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:14px}
+.proportion .bar{height:14px;display:flex;border:1px solid var(--hairline-strong);overflow:hidden}
+.proportion .bar .seg{height:100%}
+.proportion .bar-key{margin-top:14px;display:flex;flex-wrap:wrap;gap:18px;font-size:12px;color:var(--ink-muted);font-family:var(--mono)}
+.proportion .bar-key .k{display:flex;align-items:center;gap:8px}
+.proportion .bar-key .sw{width:14px;height:14px}
+
+/* ========= TYPOGRAPHY ========= */
+.type-row{display:grid;grid-template-columns:200px 1fr;gap:32px;align-items:baseline;padding:24px 0;border-bottom:1px solid var(--hairline)}
+.type-row:last-child{border-bottom:none}
+@media (max-width: 800px){ .type-row{grid-template-columns:1fr;gap:8px} }
+.type-meta .role{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:1.3px;text-transform:uppercase;color:var(--ink);margin-bottom:6px}
+.type-meta .spec{font-family:var(--mono);font-size:11px;color:var(--ink-subtle);line-height:1.7}
+.type-sample{color:var(--ink);overflow-wrap:anywhere}
+
+.t-display-xl{font-family:var(--display);font-weight:800;font-size:72px;line-height:1.0;letter-spacing:-2px;text-transform:uppercase}
+.t-display-lg{font-family:var(--display);font-weight:800;font-size:56px;line-height:1.05;letter-spacing:-1.5px;text-transform:uppercase}
+.t-display-md{font-family:var(--display);font-weight:800;font-size:36px;line-height:1.15;letter-spacing:-0.5px;text-transform:uppercase}
+.t-display-sm{font-family:var(--display);font-weight:700;font-size:28px;line-height:1.2;letter-spacing:-0.3px;text-transform:uppercase}
+.t-headline{font-family:var(--display);font-weight:600;font-size:24px;line-height:1.3;letter-spacing:-0.2px}
+.t-title-md{font-family:var(--display);font-weight:500;font-size:18px;line-height:1.4}
+.t-body-lg{font-family:var(--body);font-weight:400;font-size:18px;line-height:1.55}
+.t-body{font-family:var(--body);font-weight:400;font-size:16px;line-height:1.5}
+.t-body-sm{font-family:var(--body);font-weight:400;font-size:14px;line-height:1.5}
+.t-caption{font-family:var(--body);font-weight:500;font-size:12px;line-height:1.33;letter-spacing:.2px}
+.t-eyebrow{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:2.5px;text-transform:uppercase;color:var(--primary)}
+.t-button{font-family:var(--body);font-weight:600;font-size:14px;line-height:1.2;letter-spacing:.3px;text-transform:uppercase}
+.t-mono{font-family:var(--mono);font-weight:400;font-size:13px;line-height:1.5;color:var(--ink-muted)}
+@media (max-width: 700px){ .t-display-xl{font-size:46px;letter-spacing:-1.2px} .t-display-lg{font-size:38px} .t-display-md{font-size:28px} }
+
+/* ========= COMPONENT CARDS ========= */
+.card-grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:20px}
+@media (max-width: 1000px){ .card-grid{grid-template-columns:repeat(2, 1fr)} }
+@media (max-width: 600px){ .card-grid{grid-template-columns:1fr} }
+.spec-card{background:var(--surface-1);border:1px solid var(--hairline);padding:24px;display:flex;flex-direction:column;gap:18px;border-radius:var(--r-md);min-height:180px}
+.spec-card .name{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:1.3px;text-transform:uppercase;color:var(--ink)}
+.spec-card .preview{flex:1;display:flex;align-items:center;justify-content:center;padding:16px 0;flex-wrap:wrap;gap:10px}
+.spec-card .meta{font-family:var(--mono);font-size:11px;color:var(--ink-subtle);line-height:1.6;border-top:1px solid var(--hairline);padding-top:14px}
+
+/* Inputs */
+.field{display:flex;flex-direction:column;gap:8px}
+.field label{font-family:var(--display);font-weight:500;font-size:12px;color:var(--ink-muted);letter-spacing:1px;text-transform:uppercase}
+.field input{background:var(--surface-1);border:1px solid var(--hairline-strong);color:var(--ink);font-family:var(--body);font-size:15px;padding:12px 14px;height:44px;border-radius:var(--r-md);outline:none;transition:all .15s ease;width:100%}
+.field input::placeholder{color:var(--ink-tertiary)}
+.field input:focus,.field.is-focused input{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent)}
+.field.is-error input{border-color:var(--error)}
+.field.is-error .help{color:var(--error)}
+.field .help{font-family:var(--body);font-size:12px;color:var(--ink-subtle)}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:var(--r-pill);font-family:var(--body);font-weight:500;font-size:12px;line-height:1.33;letter-spacing:.2px}
+.badge.default{background:var(--surface-2);color:var(--ink-muted)}
+.badge.active{background:var(--primary);color:var(--on-primary)}
+.badge.outline{background:transparent;color:var(--primary);border:1px solid var(--primary)}
+.badge.success{background:color-mix(in srgb, var(--success) 12%, transparent);color:var(--success);border:1px solid color-mix(in srgb, var(--success) 40%, transparent)}
+.badge.warning{background:color-mix(in srgb, var(--warning) 12%, transparent);color:var(--warning);border:1px solid color-mix(in srgb, var(--warning) 40%, transparent)}
+.badge.error{background:color-mix(in srgb, var(--error) 12%, transparent);color:var(--error);border:1px solid color-mix(in srgb, var(--error) 40%, transparent)}
+
+/* Cards */
+.feat-card{background:var(--surface-1);border:1px solid var(--hairline-strong);border-radius:var(--r-lg);padding:28px;transition:all .2s ease}
+.feat-card:hover{background:var(--surface-2);border-color:color-mix(in srgb, var(--primary) 40%, transparent)}
+.feat-card .icon{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:1px solid var(--hairline-strong);border-radius:var(--r-md);background:var(--surface-2);color:var(--primary);margin-bottom:16px}
+.feat-card .icon svg{width:20px;height:20px;stroke-width:1.6}
+.feat-card h3{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:.3px;margin-bottom:8px}
+.feat-card p{color:var(--ink-muted);font-size:14px;line-height:1.6}
+
+.price-card{background:var(--surface-1);border:1px solid var(--hairline-strong);border-radius:var(--r-xl);padding:32px;display:flex;flex-direction:column;gap:14px;height:100%}
+.price-card.featured{background:var(--surface-2);border-color:var(--primary);box-shadow:0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent), 0 0 28px color-mix(in srgb, var(--primary) 18%, transparent);position:relative;padding-top:40px;padding-bottom:40px}
+.price-card h4{font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:.3px}
+.price-card .amt{font-family:var(--display);font-weight:800;font-size:42px;line-height:1;letter-spacing:-1px}
+.price-card .amt small{font-family:var(--body);font-weight:500;font-size:14px;color:var(--ink-muted);letter-spacing:0}
+.price-card ul{list-style:none;display:grid;gap:8px;color:var(--ink-muted);font-size:13px}
+.price-card li{display:flex;gap:8px;align-items:start}
+.price-card li::before{content:"";width:12px;height:12px;border-radius:50%;background:var(--surface-3);flex-shrink:0;margin-top:3px;border:1px solid var(--hairline-strong)}
+.price-card.featured li::before{background:var(--primary);border-color:var(--primary)}
+.featured-tag{position:absolute;top:-12px;left:32px;background:var(--canvas);padding:4px 10px;border:1px solid var(--primary);color:var(--primary);font-family:var(--display);font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;border-radius:var(--r-pill)}
+
+.testi-card{background:var(--surface-1);border:1px solid var(--hairline-strong);border-radius:var(--r-lg);padding:32px;position:relative}
+.testi-card .quote{font-family:var(--body);font-weight:400;font-size:17px;line-height:1.55;color:var(--ink-muted)}
+.testi-card .quote::before{content:"\201C";position:absolute;top:-10px;left:24px;font-family:var(--display);font-size:72px;line-height:1;color:var(--primary);font-weight:800}
+.testi-card .author{margin-top:20px;display:flex;align-items:center;gap:12px}
+.testi-card .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary-active),var(--primary));display:flex;align-items:center;justify-content:center;color:var(--on-primary);font-family:var(--display);font-weight:700;font-size:13px}
+.testi-card .who .name{font-family:var(--display);font-weight:600;font-size:15px}
+.testi-card .who .role{font-size:12px;color:var(--ink-subtle)}
+
+/* ========= PRODUCT UI (conditional — adapt or remove per brand category) ========= */
+.ui-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width: 900px){ .ui-grid{grid-template-columns:1fr} }
+.ui-block{background:var(--surface-1);border:1px solid var(--hairline-strong);border-radius:var(--r-lg);overflow:hidden}
+.ui-block .ph{background:var(--surface-2);border-bottom:1px solid var(--hairline-strong);padding:0 16px;height:36px;display:flex;align-items:center;justify-content:space-between}
+.ui-block .ph .title{font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--ink-muted)}
+.ui-block .ph .meta{font-family:var(--mono);font-size:11px;color:var(--ink-subtle)}
+.ui-block .body{padding:18px}
+
+.kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.kpi{background:var(--canvas);border:1px solid var(--hairline);border-radius:var(--r-sm);padding:14px}
+.kpi .lbl{font-family:var(--mono);font-size:11px;color:var(--ink-subtle);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.kpi .val{font-family:var(--display);font-weight:700;font-size:24px;color:var(--ink);letter-spacing:-0.3px}
+.kpi .delta{font-family:var(--mono);font-size:11px;color:var(--success);margin-top:4px}
+.kpi .delta.down{color:var(--error)}
+
+.data-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--canvas);border:1px solid var(--hairline);border-radius:var(--r-sm)}
+.data-row + .data-row{margin-top:6px}
+.data-row .name{font-family:var(--body);font-size:13px;color:var(--ink)}
+.data-row .meta{font-family:var(--mono);font-size:12px;color:var(--ink-muted)}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
+.toggle-row + .toggle-row{border-top:1px solid var(--hairline)}
+.toggle-row .lbl{font-family:var(--body);font-size:14px;color:var(--ink)}
+.toggle-row .lbl small{display:block;color:var(--ink-subtle);font-size:12px;margin-top:2px}
+.tgl{width:42px;height:24px;border-radius:var(--r-pill);background:var(--surface-3);position:relative;cursor:pointer;transition:background .15s ease;border:1px solid var(--hairline-strong)}
+.tgl::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--ink-subtle);transition:all .15s ease}
+.tgl.on{background:var(--primary);border-color:transparent}
+.tgl.on::after{left:20px;background:var(--on-primary)}
+
+.kv{font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--ink-muted)}
+.kv .k{color:var(--ink-subtle)}
+.kv .hi{color:var(--primary)}
+
+/* ========= ELEVATION ========= */
+.elev-grid{display:grid;grid-template-columns:repeat(5, 1fr);gap:14px}
+@media (max-width: 1000px){ .elev-grid{grid-template-columns:repeat(3, 1fr)} }
+@media (max-width: 600px){ .elev-grid{grid-template-columns:repeat(2, 1fr)} }
+.elev{background:var(--surface-1);border:1px solid var(--hairline);padding:18px;text-align:left}
+.elev .demo{height:80px;border-radius:var(--r-md);margin-bottom:14px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-muted)}
+.elev .lvl{font-family:var(--mono);font-size:11px;color:var(--ink-subtle);margin-bottom:4px}
+.elev .nm{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase}
+.elev .ds{font-size:12px;color:var(--ink-subtle);margin-top:4px;line-height:1.5}
+.elev-0 .demo{background:var(--canvas);border:1px dashed var(--hairline-strong)}
+.elev-1 .demo{background:var(--surface-1);border:1px solid var(--hairline-strong)}
+.elev-2 .demo{background:var(--surface-2);border:1px solid color-mix(in srgb, var(--primary) 40%, transparent)}
+.elev-3 .demo{background:var(--surface-1);border:1px solid var(--primary);box-shadow:0 0 24px color-mix(in srgb, var(--primary) 25%, transparent)}
+.elev-4 .demo{background:var(--surface-1);border:1px solid var(--primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent)}
+
+/* ========= LAYOUT ========= */
+.layout-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:48px}
+@media (max-width: 900px){ .layout-grid{grid-template-columns:1fr} }
+.radius-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+@media (max-width: 900px){ .radius-grid{grid-template-columns:repeat(4,1fr)} }
+@media (max-width: 600px){ .radius-grid{grid-template-columns:repeat(3,1fr)} }
+.rad{background:var(--surface-1);border:1px solid var(--hairline);padding:14px;text-align:center}
+.rad .d{height:48px;width:48px;background:var(--surface-3);margin:0 auto 10px}
+.rad .d.xs{border-radius:var(--r-xs)} .rad .d.sm{border-radius:var(--r-sm)} .rad .d.md{border-radius:var(--r-md)} .rad .d.lg{border-radius:var(--r-lg)} .rad .d.xl{border-radius:var(--r-xl)} .rad .d.pill{border-radius:var(--r-pill);width:60px} .rad .d.full{border-radius:50%}
+.rad .nm{font-family:var(--mono);font-size:11px;color:var(--ink)}
+.rad .vl{font-family:var(--mono);font-size:11px;color:var(--ink-subtle);margin-top:2px}
+.spacing-list{display:flex;flex-direction:column;gap:6px;background:var(--surface-1);border:1px solid var(--hairline);padding:18px}
+.sp{display:grid;grid-template-columns:80px 60px 1fr;align-items:center;gap:14px}
+.sp .nm{font-family:var(--mono);font-size:12px;color:var(--ink)}
+.sp .vl{font-family:var(--mono);font-size:11px;color:var(--ink-subtle)}
+.sp .bar{height:10px;background:linear-gradient(90deg,var(--primary-active),var(--primary))}
+
+/* ========= DO / DONT ========= */
+.dodont{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media (max-width: 800px){ .dodont{grid-template-columns:1fr} }
+.dodont .col{background:var(--surface-1);border:1px solid var(--hairline-strong);border-radius:var(--r-md);padding:28px}
+.dodont .col h3{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+.dodont .do h3{color:var(--success)}
+.dodont .dont h3{color:var(--error)}
+.dodont .col h3 .icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:1px solid currentColor}
+.dodont ul{list-style:none;display:grid;gap:14px}
+.dodont li{display:grid;grid-template-columns:14px 1fr;gap:10px;color:var(--ink-muted);font-size:14px;line-height:1.65}
+.dodont li::before{content:"";width:5px;height:5px;border-radius:50%;margin-top:9px}
+.dodont .do li::before{background:var(--success)}
+.dodont .dont li::before{background:var(--error)}
+.dodont li b,.dodont li strong{color:var(--ink);font-weight:700}
+.dodont li code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:var(--r-xs);color:var(--primary)}
+
+/* ========= LOGO ========= */
+.logo-grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:0;border-top:1px solid var(--hairline);border-left:1px solid var(--hairline)}
+@media (max-width: 800px){ .logo-grid{grid-template-columns:1fr} }
+.logo-block{padding:48px;border-right:1px solid var(--hairline);border-bottom:1px solid var(--hairline);display:flex;align-items:center;justify-content:center;min-height:220px;position:relative;overflow:hidden}
+.logo-dark{background:var(--canvas)}
+.logo-light{background:var(--ink)}
+.logo-light .lock-word{color:var(--canvas)}
+.logo-light .lock-tag{color:var(--primary-active)}
+.logo-mono-w{background:var(--canvas)}
+.logo-mono-w .lock-word, .logo-mono-w .lock-tag{color:var(--ink)}
+.logo-mono-b{background:var(--ink)}
+.logo-mono-b .lock-word, .logo-mono-b .lock-tag{color:var(--canvas)}
+.lockup{display:flex;align-items:center;gap:18px}
+.lockup .sym{width:52px;height:58px}
+.lockup .text{display:flex;flex-direction:column;gap:4px}
+.lock-word{font-family:var(--display);font-weight:700;font-size:32px;letter-spacing:6px;color:var(--ink);line-height:1}
+.lock-tag{font-family:var(--display);font-weight:500;font-size:11px;letter-spacing:5px;color:var(--primary);text-transform:uppercase;line-height:1}
+
+/* ========= FOOTER ========= */
+footer.site-footer{border-top:1px solid var(--hairline);padding:48px 0;color:var(--ink-subtle);font-size:13px}
+footer.site-footer .row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-family:var(--mono);font-size:12px}
+
+section[id]{ scroll-margin-top:72px }
+</style>
+</head>
+<body>
+
+<!-- ========================= TOP NAV ========================= -->
+<!-- BRAND-SPECIFIC: replace "BRAND NAME" with brand's actual name (uppercase) -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <div class="topnav-left">
+      <span class="brand-name">BRAND NAME</span>
+      <span class="badge-src">DESIGN.md</span>
+    </div>
+    <div class="nav-links">
+      <a href="#colors">Colors</a>
+      <a href="#typography">Typography</a>
+      <a href="#components">Components</a>
+      <a href="#product-ui">UI</a>
+      <a href="#layout">Layout</a>
+      <a href="#dodont">Directives</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ========================= HERO =========================
+     BRAND-SPECIFIC:
+     - Replace stripe colors with brand voltage (primary + accents)
+     - Replace h1 with brand tagline or "Design system inspiration of [Brand]"
+     - Replace lede with the DESIGN.md `description` paragraph (~3 sentences)
+     - Replace SVG with brand's symbol; if no logo, use wordmark only
+-->
+<section class="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <div class="stripes">
+          <span style="background:var(--primary-active)"></span>
+          <span style="background:var(--primary)"></span>
+          <span style="background:var(--ink-subtle)"></span>
+        </div>
+        <h1>Design system inspiration of [Brand]</h1>
+        <p class="lede">Replace this paragraph with the brand's description from the DESIGN.md frontmatter — typically a 3-sentence summary covering the canvas, the brand voltage, and the one thing that makes this brand unmistakable. Don't write generic copy here; use the brand's actual voice.</p>
+        <div class="cta-row">
+          <button class="btn btn-primary">Discover [Brand]</button>
+          <button class="btn btn-secondary">View DESIGN.md</button>
+        </div>
+      </div>
+      <div class="hero-canvas">
+        <div class="stripes top">
+          <span style="background:var(--primary-active)"></span>
+          <span style="background:var(--primary)"></span>
+          <span style="background:var(--ink-subtle)"></span>
+        </div>
+        <div class="ambient"></div>
+        <div class="symbol">
+          <!-- BRAND-SPECIFIC: replace with brand's actual logo SVG -->
+          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Brand mark">
+            <rect x="6" y="6" width="68" height="68" rx="12" stroke="currentColor" stroke-width="2" style="color:var(--ink)" fill="none"/>
+            <circle cx="40" cy="40" r="14" stroke="var(--primary)" stroke-width="2.5" fill="none"/>
+            <circle cx="40" cy="40" r="4" fill="var(--primary)"/>
+          </svg>
+        </div>
+        <div class="stripes bottom">
+          <span style="background:var(--primary-active)"></span>
+          <span style="background:var(--primary)"></span>
+          <span style="background:var(--ink-subtle)"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 00 LOGO =========================
+     BRAND-SPECIFIC: replace 4 logo variants (dark/light/mono-white/mono-black).
+     If brand has no logo, replace with wordmark-only blocks or skip this section.
+-->
+<section class="section" id="logo">
+  <div class="container">
+    <div class="sec-num">00 — LOGO LOCKUP</div>
+    <h2 class="sec-title">Brand mark · symbol + wordmark</h2>
+    <p class="sec-desc">Document the brand's logo system here — clear-space rule, minimum sizes, and the four canonical variants (dark, light, monochrome white, monochrome black). Pull these from the brand's identity manual.</p>
+
+    <div class="logo-grid">
+      <div class="logo-block logo-dark">
+        <div class="lockup">
+          <svg class="sym" viewBox="0 0 80 80" fill="none">
+            <rect x="6" y="6" width="68" height="68" rx="12" stroke="#F5F5F7" stroke-width="2" fill="none"/>
+            <circle cx="40" cy="40" r="14" stroke="#6CC7FF" stroke-width="2.5" fill="none"/>
+            <circle cx="40" cy="40" r="4" fill="#6CC7FF"/>
+          </svg>
+          <div class="text">
+            <span class="lock-word">BRAND</span>
+            <span class="lock-tag">Tagline</span>
+          </div>
+        </div>
+      </div>
+      <div class="logo-block logo-light">
+        <div class="lockup">
+          <svg class="sym" viewBox="0 0 80 80" fill="none">
+            <rect x="6" y="6" width="68" height="68" rx="12" stroke="#0C0D10" stroke-width="2" fill="none"/>
+            <circle cx="40" cy="40" r="14" stroke="#4AB0EC" stroke-width="2.5" fill="none"/>
+            <circle cx="40" cy="40" r="4" fill="#4AB0EC"/>
+          </svg>
+          <div class="text">
+            <span class="lock-word">BRAND</span>
+            <span class="lock-tag">Tagline</span>
+          </div>
+        </div>
+      </div>
+      <div class="logo-block logo-mono-w">
+        <div class="lockup">
+          <svg class="sym" viewBox="0 0 80 80" fill="none">
+            <rect x="6" y="6" width="68" height="68" rx="12" stroke="#F5F5F7" stroke-width="2" fill="none"/>
+            <circle cx="40" cy="40" r="14" stroke="#F5F5F7" stroke-width="2.5" fill="none"/>
+            <circle cx="40" cy="40" r="4" fill="#F5F5F7"/>
+          </svg>
+          <div class="text">
+            <span class="lock-word">BRAND</span>
+            <span class="lock-tag">Tagline</span>
+          </div>
+        </div>
+      </div>
+      <div class="logo-block logo-mono-b">
+        <div class="lockup">
+          <svg class="sym" viewBox="0 0 80 80" fill="none">
+            <rect x="6" y="6" width="68" height="68" rx="12" stroke="#0C0D10" stroke-width="2" fill="none"/>
+            <circle cx="40" cy="40" r="14" stroke="#0C0D10" stroke-width="2.5" fill="none"/>
+            <circle cx="40" cy="40" r="4" fill="#0C0D10"/>
+          </svg>
+          <div class="text">
+            <span class="lock-word">BRAND</span>
+            <span class="lock-tag">Tagline</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 01 COLORS =========================
+     BRAND-SPECIFIC:
+     - One .swatch block per color in DESIGN.md frontmatter `colors:`
+     - Group by role: Brand voltage / Surface / Text / Borders+Semantic
+     - Update HEX, NAME, role description per swatch
+     - Update proportion bar percentages if brand publishes its own
+-->
+<section class="section" id="colors">
+  <div class="container">
+    <div class="sec-num">01 — COLOR PALETTE</div>
+    <h2 class="sec-title">Canvas · voltage · ink</h2>
+    <p class="sec-desc">Replace this description with prose adapted from the DESIGN.md Overview — explain what the canvas is, where the voltage appears, and how the brand differs from category peers.</p>
+
+    <div class="color-group">
+      <span class="sub-label">Brand voltage (signature)</span>
+      <div class="signature-stripe">
+        <span style="background:#4AB0EC"></span>
+        <span style="background:linear-gradient(90deg,#4AB0EC,#6CC7FF)"></span>
+        <span style="background:#6CC7FF"></span>
+      </div>
+      <div class="swatch-grid">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#6CC7FF"></div>
+          <div class="swatch-meta">
+            <div class="name">PRIMARY</div>
+            <div class="hex">#6CC7FF</div>
+            <div class="role">Brand voltage. CTAs, focus rings, active toggles, brand mark accents.</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#88D2FF"></div>
+          <div class="swatch-meta">
+            <div class="name">PRIMARY HOVER</div>
+            <div class="hex">#88D2FF</div>
+            <div class="role">Hover lift on primary surfaces.</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#4AB0EC"></div>
+          <div class="swatch-meta">
+            <div class="name">PRIMARY ACTIVE</div>
+            <div class="hex">#4AB0EC</div>
+            <div class="role">Pressed/active state. Lower end of the brand gradient.</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#1F4258"></div>
+          <div class="swatch-meta">
+            <div class="name">PRIMARY DISABLED</div>
+            <div class="hex">#1F4258</div>
+            <div class="role">Desaturated voltage that signals "not actionable".</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="color-group">
+      <span class="sub-label">Surface</span>
+      <div class="swatch-grid">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#0C0D10"></div>
+          <div class="swatch-meta">
+            <div class="name">CANVAS</div>
+            <div class="hex">#0C0D10</div>
+            <div class="role">Default page floor — anchors the entire system.</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#16181D"></div>
+          <div class="swatch-meta">
+            <div class="name">SURFACE-1</div>
+            <div class="hex">#16181D</div>
+            <div class="role">One step above canvas. Default cards, panels.</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#1C1F26"></div>
+          <div class="swatch-meta">
+            <div class="name">SURFACE-2</div>
+            <div class="hex">#1C1F26</div>
+            <div class="role">Two steps above canvas. Hovered/featured cards.</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#232730"></div>
+          <div class="swatch-meta">
+            <div class="name">SURFACE-3</div>
+            <div class="hex">#232730</div>
+            <div class="role">Raised toolbars, popovers, dropdown menus.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="color-group">
+      <span class="sub-label">Text</span>
+      <div class="swatch-grid">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#F5F5F7"></div>
+          <div class="swatch-meta">
+            <div class="name">INK</div>
+            <div class="hex">#F5F5F7</div>
+            <div class="role">Headlines and primary text.</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#B0B3BD"></div>
+          <div class="swatch-meta">
+            <div class="name">INK MUTED</div>
+            <div class="hex">#B0B3BD</div>
+            <div class="role">Secondary body, lead paragraphs.</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#7A7E8A"></div>
+          <div class="swatch-meta">
+            <div class="name">INK SUBTLE</div>
+            <div class="hex">#7A7E8A</div>
+            <div class="role">Captions, table labels, breadcrumbs.</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#555964"></div>
+          <div class="swatch-meta">
+            <div class="name">INK TERTIARY</div>
+            <div class="hex">#555964</div>
+            <div class="role">Disabled, footnotes, decorative timestamps.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="color-group">
+      <span class="sub-label">Borders · Semantic</span>
+      <div class="swatch-grid cols-5">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#20232B"></div>
+          <div class="swatch-meta">
+            <div class="name">HAIRLINE</div>
+            <div class="hex">#20232B</div>
+            <div class="role">1px dividers and section partitions.</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#2A2E38"></div>
+          <div class="swatch-meta">
+            <div class="name">HAIRLINE STRONG</div>
+            <div class="hex">#2A2E38</div>
+            <div class="role">Card outlines, input borders.</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#4ADE80"></div>
+          <div class="swatch-meta">
+            <div class="name">SUCCESS</div>
+            <div class="hex">#4ADE80</div>
+            <div class="role">Confirmation states, completed actions.</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#FBBF24"></div>
+          <div class="swatch-meta">
+            <div class="name">WARNING</div>
+            <div class="hex">#FBBF24</div>
+            <div class="role">Caution states, near-quota.</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#F87171"></div>
+          <div class="swatch-meta">
+            <div class="name">ERROR</div>
+            <div class="hex">#F87171</div>
+            <div class="role">Destructive states, validation failed.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="proportion">
+      <h4>Usage proportion</h4>
+      <div class="bar">
+        <div class="seg" style="background:var(--canvas);width:40%;border-right:1px solid var(--hairline-strong)"></div>
+        <div class="seg" style="background:var(--surface-1);width:25%;border-right:1px solid var(--hairline-strong)"></div>
+        <div class="seg" style="background:var(--ink-subtle);width:25%;border-right:1px solid var(--hairline-strong)"></div>
+        <div class="seg" style="background:linear-gradient(90deg,var(--gradient-from),var(--gradient-to));width:10%"></div>
+      </div>
+      <div class="bar-key">
+        <div class="k"><span class="sw" style="background:var(--canvas);border:1px solid var(--hairline-strong)"></span> Base 60–70%</div>
+        <div class="k"><span class="sw" style="background:var(--surface-1)"></span> Surface</div>
+        <div class="k"><span class="sw" style="background:var(--ink-subtle)"></span> Support 20–30%</div>
+        <div class="k"><span class="sw" style="background:var(--primary)"></span> Voltage 5–10%</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 02 TYPOGRAPHY =========================
+     BRAND-SPECIFIC:
+     - One .type-row per role in DESIGN.md `typography:`
+     - Update spec values (size / weight / line-height / letter-spacing)
+     - Replace sample text with brand-appropriate copy
+-->
+<section class="section" id="typography">
+  <div class="container">
+    <div class="sec-num">02 — TYPOGRAPHY SCALE</div>
+    <h2 class="sec-title">Display · body · mono</h2>
+    <p class="sec-desc">Document the brand's typographic voice — display family + body family + mono family, the principles that govern hierarchy (e.g. negative tracking on display, uppercase eyebrow with positive tracking), and any non-obvious rules.</p>
+
+    <div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="role">DISPLAY-XL</div>
+          <div class="spec">Display · 800<br>72px / 1.0 / -2px</div>
+        </div>
+        <div class="type-sample t-display-xl">Hero headline goes here</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="role">DISPLAY-LG</div>
+          <div class="spec">Display · 800<br>56px / 1.05 / -1.5px</div>
+        </div>
+        <div class="type-sample t-display-lg">Major section opener</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="role">DISPLAY-MD · H1</div>
+          <div class="spec">Display · 800<br>36px / 1.15 / -0.5px</div>
+        </div>
+        <div class="type-sample t-display-md">Page title</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="role">DISPLAY-SM</div>
+          <div class="spec">Display · 700<br>28px / 1.2 / -0.3px</div>
+        </div>
+        <div class="type-sample t-display-sm">Sub-section heading</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="role">HEADLINE · H2</div>
+          <div class="spec">Display · 600<br>24px / 1.3 / -0.2px</div>
+        </div>
+        <div class="type-sample t-headline">A measured headline</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="role">TITLE-MD · H3</div>
+          <div class="spec">Display · 500<br>18px / 1.4</div>
+        </div>
+        <div class="type-sample t-title-md">Card or list title</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="role">EYEBROW</div>
+          <div class="spec">Display · 600<br>13px / 1.4 / +2.5px<br>UPPERCASE</div>
+        </div>
+        <div class="type-sample t-eyebrow">Section taxonomy label</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="role">BODY-LG</div>
+          <div class="spec">Body · 400<br>18px / 1.55</div>
+        </div>
+        <div class="type-sample t-body-lg">Lead paragraph below display headlines. Slightly larger and slightly looser than the default body for contextual emphasis.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="role">BODY</div>
+          <div class="spec">Body · 400<br>16px / 1.5</div>
+        </div>
+        <div class="type-sample t-body">Default body. The quick brown fox jumps over the lazy dog. AaBbCcDdEeFfGg 0123456789.</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="role">CAPTION</div>
+          <div class="spec">Body · 500<br>12px / 1.33 / +0.2px</div>
+        </div>
+        <div class="type-sample t-caption" style="color:var(--ink-muted)">Caption / metadata · 2026</div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="role">BUTTON</div>
+          <div class="spec">Body · 600<br>14px / 1.2 / +0.3px<br>UPPERCASE</div>
+        </div>
+        <div class="type-sample"><span class="t-button" style="display:inline-block;padding:10px 20px;border:1px solid var(--hairline-strong);border-radius:var(--r-md);background:var(--surface-2)">Button label</span></div>
+      </div>
+      <div class="type-row">
+        <div class="type-meta">
+          <div class="role">MONO</div>
+          <div class="spec">Mono · 400<br>13px / 1.5</div>
+        </div>
+        <div class="type-sample t-mono">/path/to/file.ext · 2026-01-01 · sha256:f3a…</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 03 BUTTONS ========================= -->
+<section class="section" id="components">
+  <div class="container">
+    <div class="sec-num">03 — BUTTON VARIANTS</div>
+    <h2 class="sec-title">Primary · secondary · ghost</h2>
+    <p class="sec-desc">Document the brand's button system here. Explain the radius decision (rectangular vs rounded vs pill), uppercase vs sentence case, and where the primary appears (only one accent CTA per visual region, etc.).</p>
+
+    <div class="card-grid">
+      <div class="spec-card">
+        <span class="name">BUTTON-PRIMARY</span>
+        <div class="preview"><button class="btn btn-primary">Primary action</button></div>
+        <div class="meta">primary · on-primary · rounded.md · h 44px</div>
+      </div>
+      <div class="spec-card">
+        <span class="name">BUTTON-PRIMARY · STATES</span>
+        <div class="preview">
+          <button class="btn btn-primary" style="background:var(--primary-hover);border-color:var(--primary-hover)">Hover</button>
+          <button class="btn btn-primary" style="background:var(--primary-active);border-color:var(--primary-active)">Active</button>
+          <button class="btn btn-primary is-disabled">Disabled</button>
+        </div>
+        <div class="meta">primary-hover · primary-active · primary-disabled</div>
+      </div>
+      <div class="spec-card">
+        <span class="name">BUTTON-SECONDARY</span>
+        <div class="preview"><button class="btn btn-secondary">Secondary</button></div>
+        <div class="meta">surface-1 · ink · 1px hairline-strong</div>
+      </div>
+      <div class="spec-card">
+        <span class="name">BUTTON-GHOST</span>
+        <div class="preview"><button class="btn btn-ghost">Tertiary action →</button></div>
+        <div class="meta">transparent · ink · no border</div>
+      </div>
+      <div class="spec-card">
+        <span class="name">BUTTON-ICON</span>
+        <div class="preview">
+          <button class="btn btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M5 3l8 5-8 5V3z"/></svg></button>
+          <button class="btn btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2"/></svg></button>
+          <button class="btn btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h12M2 12h12"/></svg></button>
+        </div>
+        <div class="meta">40 × 40 · surface-1 · primary stroke icon</div>
+      </div>
+      <div class="spec-card">
+        <span class="name">TEXT-LINK</span>
+        <div class="preview"><a href="#" style="color:var(--primary);font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:1px;text-transform:uppercase">View documentation →</a></div>
+        <div class="meta">primary · uppercase · +1px tracking</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 04 INPUTS + BADGES ========================= -->
+<section class="section">
+  <div class="container">
+    <div class="sec-num">04 — INPUTS · BADGES</div>
+    <h2 class="sec-title">Form controls · status pills</h2>
+    <p class="sec-desc">Document input states (default / focused / error) and the badge taxonomy. Explain how focus is signaled (cyan ring? underline? border tint?) and which semantic colors are used in badges vs reserved for other surfaces.</p>
+
+    <div class="card-grid">
+      <div class="spec-card">
+        <span class="name">TEXT-INPUT · DEFAULT</span>
+        <div class="preview" style="width:100%;flex-direction:column">
+          <div class="field" style="width:100%">
+            <label>Field label</label>
+            <input type="text" placeholder="Placeholder text…">
+          </div>
+        </div>
+        <div class="meta">surface-1 · ink · rounded.md · h 44px</div>
+      </div>
+      <div class="spec-card">
+        <span class="name">TEXT-INPUT · FOCUSED</span>
+        <div class="preview" style="width:100%;flex-direction:column">
+          <div class="field is-focused" style="width:100%">
+            <label>Active focus state</label>
+            <input type="text" value="value entered by user">
+          </div>
+        </div>
+        <div class="meta">1px primary border + 3px ring 30% alpha</div>
+      </div>
+      <div class="spec-card">
+        <span class="name">TEXT-INPUT · ERROR</span>
+        <div class="preview" style="width:100%;flex-direction:column">
+          <div class="field is-error" style="width:100%">
+            <label>Validation failed</label>
+            <input type="text" value="invalid_value">
+            <span class="help">Helper text describing the error.</span>
+          </div>
+        </div>
+        <div class="meta">1px error border · helper text in error</div>
+      </div>
+      <div class="spec-card">
+        <span class="name">BADGE · ACTIVE</span>
+        <div class="preview">
+          <span class="badge active">ACTIVE</span>
+          <span class="badge default">v1.0</span>
+        </div>
+        <div class="meta">primary · on-primary · rounded.pill</div>
+      </div>
+      <div class="spec-card">
+        <span class="name">BADGE · OUTLINE</span>
+        <div class="preview">
+          <span class="badge outline">Category A</span>
+          <span class="badge outline">Category B</span>
+          <span class="badge outline">Category C</span>
+        </div>
+        <div class="meta">transparent · 1px primary · primary label</div>
+      </div>
+      <div class="spec-card">
+        <span class="name">BADGE · SEMANTIC</span>
+        <div class="preview">
+          <span class="badge success">Success</span>
+          <span class="badge warning">Warning</span>
+          <span class="badge error">Error</span>
+        </div>
+        <div class="meta">success · warning · error tokens</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 05 CARDS =========================
+     BRAND-SPECIFIC:
+     - Feature cards: one per brand pillar/value (varies per brand)
+     - Pricing: only if applicable to brand category; rename tiers per brand
+     - Testimonial: replace with brand-appropriate quote and author
+-->
+<section class="section">
+  <div class="container">
+    <div class="sec-num">05 — CARDS</div>
+    <h2 class="sec-title">Surface lift · hairline · primary edge</h2>
+    <p class="sec-desc">Hierarchy is built from surface lift (canvas → surface-1 → surface-2) plus 1px hairlines, never from drop shadows. The "featured" tier raises one surface step and adds a primary edge highlight with a soft outer glow.</p>
+
+    <span class="sub-label">Feature cards</span>
+    <div class="card-grid" style="margin-bottom:48px">
+      <div class="feat-card">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg></div>
+        <h3>Pillar one</h3>
+        <p>Replace this with the first brand pillar's name and one-line description from the DESIGN.md.</p>
+      </div>
+      <div class="feat-card">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7h18M3 12h14M3 17h18"/></svg></div>
+        <h3>Pillar two</h3>
+        <p>Replace with the second brand pillar — keep the description short and outcome-focused.</p>
+      </div>
+      <div class="feat-card">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+        <h3>Pillar three</h3>
+        <p>Replace with the third brand pillar. Add more cards (3-up grid wraps to 2-up tablet, 1-up mobile) if the brand has more pillars.</p>
+      </div>
+    </div>
+
+    <span class="sub-label">Pricing — featured tier elevated by surface + edge</span>
+    <div class="card-grid" style="grid-template-columns:repeat(3,1fr);align-items:start;margin-bottom:48px">
+      <div class="price-card">
+        <span class="t-eyebrow" style="color:var(--ink-subtle)">Tier A</span>
+        <h4>Starter</h4>
+        <div class="amt">$0<small>/mo</small></div>
+        <ul>
+          <li>Feature one</li>
+          <li>Feature two</li>
+          <li>Feature three</li>
+        </ul>
+        <button class="btn btn-secondary" style="margin-top:auto">Choose</button>
+      </div>
+      <div class="price-card featured">
+        <span class="featured-tag">Most popular</span>
+        <span class="t-eyebrow">Tier B</span>
+        <h4>Pro</h4>
+        <div class="amt">$00<small>/mo</small></div>
+        <ul>
+          <li>Everything in Starter</li>
+          <li>Pro feature one</li>
+          <li>Pro feature two</li>
+          <li>Pro feature three</li>
+        </ul>
+        <button class="btn btn-primary" style="margin-top:auto">Choose Pro</button>
+      </div>
+      <div class="price-card">
+        <span class="t-eyebrow" style="color:var(--ink-subtle)">Tier C</span>
+        <h4>Enterprise</h4>
+        <div class="amt">Custom</div>
+        <ul>
+          <li>Everything in Pro</li>
+          <li>SSO + audit log</li>
+          <li>Dedicated support</li>
+        </ul>
+        <button class="btn btn-secondary" style="margin-top:auto">Talk to sales</button>
+      </div>
+    </div>
+
+    <span class="sub-label">Testimonial</span>
+    <div class="testi-card" style="max-width:720px">
+      <p class="quote">Replace this quote with brand-appropriate testimonial copy. Keep it specific and outcome-oriented — generic praise like "great product" doesn't sell the brand.</p>
+      <div class="author">
+        <div class="av">AB</div>
+        <div class="who">
+          <div class="name">Author Name</div>
+          <div class="role">Role · Company</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 06 PRODUCT UI (CONDITIONAL) =========================
+     BRAND-SPECIFIC:
+     This section is conditional on brand category.
+     - Software/tools brands: keep with brand-relevant primitives
+       (e.g. dashboard, kanban, code editor, analytics widgets)
+     - Editorial/lifestyle/automotive brands: replace with brand-relevant primitives
+       (article cards, configurator, lookbook frame)
+     - No suitable primitive: REMOVE this entire section and the nav link
+-->
+<section class="section" id="product-ui">
+  <div class="container">
+    <div class="sec-num">06 — PRODUCT UI PRIMITIVES</div>
+    <h2 class="sec-title">In-app surfaces</h2>
+    <p class="sec-desc">Document the brand's product UI primitives. The examples below are generic dashboard primitives — replace with whatever is most relevant to the brand category, or remove the section entirely if not applicable.</p>
+
+    <div class="ui-grid">
+      <div class="ui-block">
+        <div class="ph">
+          <span class="title">Overview</span>
+          <span class="meta">last 30 days</span>
+        </div>
+        <div class="body">
+          <div class="kpi-row">
+            <div class="kpi"><div class="lbl">Metric A</div><div class="val">12,480</div><div class="delta">+12.4%</div></div>
+            <div class="kpi"><div class="lbl">Metric B</div><div class="val">98.2%</div><div class="delta">+0.8%</div></div>
+            <div class="kpi" style="margin-top:12px"><div class="lbl">Metric C</div><div class="val">$48k</div><div class="delta down">−2.1%</div></div>
+            <div class="kpi" style="margin-top:12px"><div class="lbl">Metric D</div><div class="val">3.42s</div><div class="delta">+5.0%</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ui-block">
+        <div class="ph">
+          <span class="title">Recent activity</span>
+          <span class="meta">live</span>
+        </div>
+        <div class="body">
+          <div class="data-row"><span class="name">Item one</span><span class="meta">2m ago</span></div>
+          <div class="data-row"><span class="name">Item two</span><span class="meta">14m ago</span></div>
+          <div class="data-row"><span class="name">Item three</span><span class="meta">1h ago</span></div>
+          <div class="data-row"><span class="name">Item four</span><span class="meta">3h ago</span></div>
+        </div>
+      </div>
+
+      <div class="ui-block">
+        <div class="ph">
+          <span class="title">Settings</span>
+          <span class="meta">v1.0</span>
+        </div>
+        <div class="body">
+          <div class="toggle-row"><div class="lbl">Setting one<small>Description of what this setting does</small></div><div class="tgl on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="toggle-row"><div class="lbl">Setting two<small>Another setting description</small></div><div class="tgl on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="toggle-row"><div class="lbl">Setting three<small>Off by default</small></div><div class="tgl" onclick="this.classList.toggle('on')"></div></div>
+          <div class="toggle-row"><div class="lbl">Setting four<small>Off by default</small></div><div class="tgl" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      </div>
+
+      <div class="ui-block">
+        <div class="ph">
+          <span class="title">Inspector</span>
+          <span class="meta">item 04</span>
+        </div>
+        <div class="body">
+          <div class="kv">
+            <div><span class="k">id →</span> 8a3f2c1d</div>
+            <div><span class="k">type →</span> example</div>
+            <div><span class="k">status →</span> <span class="hi">active</span></div>
+            <div><span class="k">size →</span> 4.2 MB</div>
+            <div><span class="k">created →</span> 2026-01-01</div>
+            <div><span class="k">path →</span> /vol/example/item.ext</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 07 ELEVATION ========================= -->
+<section class="section">
+  <div class="container">
+    <div class="sec-num">07 — ELEVATION & DEPTH</div>
+    <h2 class="sec-title">Depth from surface — not shadow</h2>
+    <p class="sec-desc">Five levels. None use neutral gray drop shadows. Level 3 is the "spotlight" — a 1px primary border with a soft outer glow, reserved for featured/active states. Level 4 is the focus ring (3px outer primary ring at 30% alpha).</p>
+
+    <div class="elev-grid">
+      <div class="elev elev-0"><div class="demo">CANVAS</div><div class="lvl">level 0</div><div class="nm">Flat</div><div class="ds">No border, no shadow</div></div>
+      <div class="elev elev-1"><div class="demo">SURFACE-1</div><div class="lvl">level 1</div><div class="nm">Surface lift</div><div class="ds">Default cards + hairline</div></div>
+      <div class="elev elev-2"><div class="demo">SURFACE-2</div><div class="lvl">level 2</div><div class="nm">Hover lift</div><div class="ds">Border tints primary 30%</div></div>
+      <div class="elev elev-3"><div class="demo">PRIMARY GLOW</div><div class="lvl">level 3</div><div class="nm">Spotlight</div><div class="ds">Primary border + outer glow</div></div>
+      <div class="elev elev-4"><div class="demo">FOCUS RING</div><div class="lvl">level 4</div><div class="nm">Focus</div><div class="ds">3px ring primary 30%</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 08 SHAPES + SPACING ========================= -->
+<section class="section" id="layout">
+  <div class="container">
+    <div class="sec-num">08 — SHAPES & SPACING</div>
+    <h2 class="sec-title">Border radius · spacing scale</h2>
+    <p class="sec-desc">Document the brand's radius philosophy (rectangular = engineered; rounded = friendly; pill = playful) and the spacing base unit. Section rhythm is typically 96px on marketing surface; the hero often opens at 128px.</p>
+
+    <div class="layout-grid">
+      <div>
+        <span class="sub-label">Border radius</span>
+        <div class="radius-grid">
+          <div class="rad"><div class="d xs"></div><div class="nm">xs</div><div class="vl">4px</div></div>
+          <div class="rad"><div class="d sm"></div><div class="nm">sm</div><div class="vl">6px</div></div>
+          <div class="rad"><div class="d md"></div><div class="nm">md</div><div class="vl">8px</div></div>
+          <div class="rad"><div class="d lg"></div><div class="nm">lg</div><div class="vl">12px</div></div>
+          <div class="rad"><div class="d xl"></div><div class="nm">xl</div><div class="vl">16px</div></div>
+          <div class="rad"><div class="d pill"></div><div class="nm">pill</div><div class="vl">9999</div></div>
+          <div class="rad"><div class="d full"></div><div class="nm">full</div><div class="vl">circle</div></div>
+        </div>
+      </div>
+      <div>
+        <span class="sub-label">Spacing (4px base)</span>
+        <div class="spacing-list">
+          <div class="sp"><span class="nm">xxs</span><span class="vl">4px</span><div class="bar" style="width:4px"></div></div>
+          <div class="sp"><span class="nm">xs</span><span class="vl">8px</span><div class="bar" style="width:8px"></div></div>
+          <div class="sp"><span class="nm">sm</span><span class="vl">12px</span><div class="bar" style="width:12px"></div></div>
+          <div class="sp"><span class="nm">md</span><span class="vl">16px</span><div class="bar" style="width:16px"></div></div>
+          <div class="sp"><span class="nm">lg</span><span class="vl">24px</span><div class="bar" style="width:24px"></div></div>
+          <div class="sp"><span class="nm">xl</span><span class="vl">32px</span><div class="bar" style="width:32px"></div></div>
+          <div class="sp"><span class="nm">xxl</span><span class="vl">48px</span><div class="bar" style="width:48px"></div></div>
+          <div class="sp"><span class="nm">xxxl</span><span class="vl">64px</span><div class="bar" style="width:64px"></div></div>
+          <div class="sp"><span class="nm">section</span><span class="vl">96px</span><div class="bar" style="width:96px"></div></div>
+          <div class="sp"><span class="nm">hero</span><span class="vl">128px</span><div class="bar" style="width:128px"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= 09 DO / DON'T =========================
+     BRAND-SPECIFIC: pull each <li> directly from the DESIGN.md `Do's and Don'ts` prose.
+     Bold the leading clause with <b>; wrap token references in <code>.
+-->
+<section class="section" id="dodont">
+  <div class="container">
+    <div class="sec-num">09 — DIRECTIVES</div>
+    <h2 class="sec-title">Do's and don'ts</h2>
+    <p class="sec-desc">The Don'ts encode the negative space of the brand — they tell an agent what NOT to default to. Each rule should be concrete (name a specific value or pattern), anti-default (oppose a generic AI tendency), and reasoned (imply WHY).</p>
+
+    <div class="dodont">
+      <div class="col do">
+        <h3><span class="icon">✓</span> DO</h3>
+        <ul>
+          <li><b>Replace with first brand "do" rule.</b> Pull from DESIGN.md prose; keep the bold leading clause.</li>
+          <li><b>Replace with second rule.</b> Concrete, specific, with token references where helpful: <code>{colors.primary}</code>.</li>
+          <li><b>Replace with third rule.</b> About canvas anchoring, voltage usage, or typographic non-negotiables.</li>
+          <li><b>Replace with fourth rule.</b> About surface ladder, depth construction, or visual rhythm.</li>
+          <li><b>Replace with fifth rule.</b> About when and where the primary appears.</li>
+        </ul>
+      </div>
+      <div class="col dont">
+        <h3><span class="icon">✕</span> DON'T</h3>
+        <ul>
+          <li><b>Replace with first brand "don't".</b> Specific anti-pattern (e.g. don't use <code>#000000</code> when canvas is tinted near-black).</li>
+          <li><b>Replace with second.</b> Anti-default — what generic AI output would do that this brand explicitly rejects.</li>
+          <li><b>Replace with third.</b> Often: don't introduce a second chromatic accent.</li>
+          <li><b>Replace with fourth.</b> About forbidden shapes (e.g. don't pill-round CTAs).</li>
+          <li><b>Replace with fifth.</b> About forbidden depth treatment (e.g. no neutral gray drop shadows).</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= FOOTER ========================= -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="row">
+      <span>© 2026 BRAND NAME · BRAND DESIGN SYSTEM</span>
+      <span>Generated from DESIGN.md · v alpha</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
