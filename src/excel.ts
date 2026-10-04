@@ -1,5 +1,7 @@
 import { strFromU8, unzipSync } from 'fflate';
-import { hasV2Protection, MAX_FILE_BYTES, transformOoxml } from './excel-ooxml';
+import { hasWorkbookProtection, MAX_FILE_BYTES, transformOoxml } from './excel-ooxml';
+import type { WorkbookKey } from './excel-ooxml';
+export type { WorkbookKey } from './excel-ooxml';
 import { transformWorkbook as transformV1 } from './excel-v1';
 import { syntheticWorkbook } from './excel-synthetic';
 
@@ -25,21 +27,21 @@ function packageInfo(input: Uint8Array): { legacy: boolean } {
 
 /** Generate a clean synthetic XLSX view with an encrypted, exact-original snapshot. */
 export async function transformWorkbook(
-  input: Uint8Array, password: string, mode: 'protect' | 'restore',
+  input: Uint8Array, password: WorkbookKey, mode: 'protect' | 'restore',
   options: { filename?: string } = {},
 ): Promise<{ data: Uint8Array; cells: number; sheets: number; filename?: string }> {
   if (mode !== 'protect' && mode !== 'restore') throw new Error('Choose protect or restore.');
-  if (!password) throw new Error('Enter a password.');
+  if (password !== null && !password) throw new Error('Enter a password.');
   if (input.length > MAX_FILE_BYTES) throw new Error('Workbook exceeds the 64 MiB limit.');
   if (!input.length) throw new Error('Choose a valid Excel workbook.');
 
   if (isZip(input)) {
     // Validate and bound ZIP inflation before any secondary parser sees the package.
-    const v2 = hasV2Protection(input);
-    if (v2) return transformOoxml(input, password, mode, options);
+    if (hasWorkbookProtection(input)) return transformOoxml(input, password, mode, options);
     const info = packageInfo(input);
     if (info.legacy) {
       if (mode === 'protect') throw new Error('Workbook is already protected.');
+      if (typeof password !== 'string') throw new Error('This workbook requires a password.');
       return transformV1(input, password, 'restore');
     }
     if (mode === 'restore') throw new Error('ExcelKey metadata is missing or damaged.');
@@ -49,7 +51,7 @@ export async function transformWorkbook(
 
   let view: ReturnType<typeof syntheticWorkbook>;
   try {
-    view = syntheticWorkbook(input, password);
+    view = syntheticWorkbook(input, typeof password === 'string' ? password : '');
   } catch (cause) {
     const reason = cause instanceof Error ? cause.message : 'Could not read the workbook.';
     throw new Error(`Could not read this Excel file: ${reason}`);

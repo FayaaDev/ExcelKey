@@ -2,7 +2,7 @@
 // Precaches the app shell so ExcelKey installs as a PWA and runs fully offline
 // (the crypto is all client-side). Strategy: network-first, so an online reload
 // always gets fresh code, falling back to cache when offline.
-const CACHE = "excelkey-v3";
+const CACHE = "excelkey-v4-passkey";
 const SHELL = ["/", "/index.html", "/dist/excel-app.js", "/manifest.json", "/icon.svg", "/logo.svg", "/fonts/inter.woff2", "/fonts/thmanyahsans-Bold.woff2"];
 // The raster icons (~9 KB) are cosmetic offline, so they precache best-effort: a flaky
 // icon fetch must never abort the whole shell upgrade (addAll is all-or-nothing).

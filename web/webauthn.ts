@@ -53,9 +53,9 @@ export function deploymentRpId(): string {
 
 /**
  * Enroll a new passkey with the PRF extension enabled (§4.1). Throws if PRF is unsupported.
- * Returns nothing persistent — the credential is discoverable.
+ * Returns the credential ID so setup can verify this exact passkey; no persistence needed.
  */
-export async function enrollPasskey(displayName: string): Promise<void> {
+export async function enrollPasskey(displayName: string): Promise<Uint8Array> {
   const cred = (await navigator.credentials.create({
     publicKey: {
        rp: { id: deploymentRpId(), name: "ExcelKey" },
@@ -86,16 +86,18 @@ export async function enrollPasskey(displayName: string): Promise<void> {
   if (!ext.prf?.enabled) {
     throw new Error("this authenticator/browser does not support the PRF extension");
   }
+  return new Uint8Array(cred.rawId);
 }
 
 /**
  * Perform a PRF assertion and return the 32-byte prf_secret (§4.1).
- * Uses a discoverable-credential get() with no allowCredentials.
+ * Uses the native discoverable picker, or pins the newly enrolled credential during setup.
  */
-export async function getPrfSecret(): Promise<Uint8Array> {
+export async function getPrfSecret(credentialId?: Uint8Array): Promise<Uint8Array> {
   const assertion = (await navigator.credentials.get({
     publicKey: {
       rpId: deploymentRpId(),
+      ...(credentialId ? { allowCredentials: [{ type: 'public-key' as const, id: bs(credentialId) }] } : {}),
       challenge: bs(randomBytes(32)),
       userVerification: "required", // MUST match enrollment: PRF returns a different secret without UV (see enrollPasskey)
       timeout: 60_000,

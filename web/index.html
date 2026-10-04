@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title data-i18n="ExcelKey — Generate synthetic workbook">ExcelKey — Generate synthetic workbook</title>
-  <meta name="description" content="Generate a clean synthetic Excel workbook locally in your browser. Keep headers and dates visible, and restore the encrypted original with your password.">
+  <meta name="description" content="Generate a synthetic Excel workbook locally. Restore the encrypted original with your passkey or recovery phrase. No accounts or uploads.">
   <meta name="theme-color" content="#ffffff">
   <link rel="icon" href="/logo.svg" type="image/svg+xml">
   <link rel="manifest" href="/manifest.json">
@@ -57,7 +57,7 @@
     main { padding: 15vh 25% 0; }
     .conversation { padding-bottom: 22vh; }
     p { margin: 0; }
-    h1 { margin: 0 0 8px; font-size: 16px; font-weight: 700; line-height: inherit; }
+    h1, #backup-title { margin: 0 0 8px; font-size: 16px; font-weight: 700; line-height: inherit; }
     a { color: var(--link); text-decoration: none; text-underline-offset: 3px; }
     a:hover { color: var(--link-hover); }
     .message { position: relative; width: 50%; margin-block: 22px; margin-inline: 50px 0; overflow-wrap: anywhere; }
@@ -83,12 +83,14 @@
     .operations input:disabled + .choice { opacity: .6; cursor: not-allowed; }
     .field { margin-bottom: 22px; }
     .field > label { display: block; margin-bottom: 8px; font-weight: 600; }
-    input[type=password], input[type=text], input[type=file] { width: 100%; min-width: 0; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--surface); color: var(--soft-ink); font: inherit; caret-color: var(--primary); }
+    input[type=password], input[type=text], input[type=file], select, textarea { width: 100%; min-width: 0; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--surface); color: var(--soft-ink); font: inherit; caret-color: var(--primary); }
+    textarea { resize: vertical; }
+    #backup-phrase { margin-block: 12px; overflow-wrap: anywhere; user-select: all; }
     input:focus { border-color: #1377f955; }
     input[type=file] { font-size: 14px; }
     input::file-selector-button { border: 1px solid var(--ghost-border); border-radius: 10px; background: var(--fill); color: var(--soft-ink); font: inherit; padding: 8px 12px; margin-inline-end: 10px; cursor: pointer; }
     input::file-selector-button:hover { background: var(--hover); }
-    input[type=checkbox] { width: 18px; height: 18px; margin: 0; accent-color: var(--primary); }
+    input[type=checkbox] { width: 18px; height: 18px; flex-shrink: 0; margin: 0; accent-color: var(--primary); }
     .field > .show-password { display: flex; align-items: center; gap: 8px; width: fit-content; padding-block: 8px; margin: 4px 0 0; font-weight: 400; cursor: pointer; }
     .hint { color: var(--secondary); font-size: 13px; line-height: 1.4; margin-top: 8px; }
     .file-card { display: flex; align-items: flex-start; gap: 16px; width: 50%; margin-block: 10px; margin-inline: 50px 0; padding: 16px; border-radius: 10px; }
@@ -134,12 +136,15 @@
   <!-- Design contract: Operate; pinned ExcelKey system from DESIGN.md. White/near-black canvas,
   Inter 16/1.45, blue #1377f9, lock avatars, compact native task choices; no hero or decoration.
   Fixed 10vh header; desktop main 15vh/25%, half-column messages indented 50px.
-  Initial conversation → hidden workbook/password workflow → uploaded card, busy/error, download.
+  Initial conversation → task/file → passkey action → busy/error → download. Setup offers optional
+  same-root recovery backup; restore explicitly selects passkey/recovery/legacy password.
+  Both tasks offer No password via native selects, with an explicit non-confidentiality hint;
+  no-secret mode hides credential fields and backup, retaining busy/error/download states.
   Dock hidden initially, fixed when active. <=1080: 5vw gutters, calc(100% - 70px) messages;
   <=720: centered dock title, no icon, equal buttons. Preserve factual help; explicit focus rings
   extend the source; light/dark/auto tokens and reduced motion retain identical geometry. -->
   <header>
-    <div class="brand"><img src="/logo.svg" alt="" width="22" height="27">ExcelKey</div>
+    <div class="brand"><img src="/logo.svg" alt="" width="22" height="27"><span data-i18n="ExcelKey">ExcelKey</span></div>
     <div class="navigation">
       <button id="language-toggle" class="ghost" type="button" lang="ar" aria-label="Switch to Arabic" data-i18n-aria-label="Switch to Arabic">العربية</button>
       <button id="menu-toggle" type="button" aria-label="Menu" data-i18n-aria-label="Menu" aria-expanded="false" aria-controls="app-menu"><span class="menu-mark" aria-hidden="true"><span></span><span></span><span></span></span></button>
@@ -161,7 +166,6 @@
     <div class="conversation">
     <div class="message">
       <h1 data-i18n="Generate synthetic workbook">Generate synthetic workbook</h1>
-      <p><span data-i18n="Create a clean workbook with synthetic values and an encrypted original embedded inside.">Create a clean workbook with synthetic values and an encrypted original embedded inside.</span> <strong><span data-i18n="Original headers in row 1 and dates stay visible.">Original headers in row 1 and dates stay visible.</span></strong> <span data-i18n="Restore the exact original file with the same password.">Restore the exact original file with the same password.</span></p>
     </div>
     <form id="workbook-form">
       <fieldset id="controls" disabled>
@@ -184,16 +188,39 @@
           <input id="workbook" type="file" accept=".xlsx,.xlsm,.xltx,.xltm,.xls,.xlsb,.xlt,.xml" required aria-describedby="file-help">
           <p id="file-help" class="hint" data-i18n="Excel workbooks · maximum 64 MiB. Your original file is never overwritten.">Excel workbooks · maximum 64 MiB. Your original file is never overwritten.</p>
         </div>
-        <div class="field">
-          <label for="password" id="password-label" data-i18n="Create a password">Create a password</label>
-          <input id="password" type="password" autocomplete="new-password" required aria-describedby="password-help" spellcheck="false" autocapitalize="none">
-          <label class="show-password"><input id="show-password" type="checkbox"><span data-i18n="Show passwords">Show passwords</span></label>
-          <p id="password-help" class="hint" data-i18n="Use a long, unique password and keep it safe. There is no password recovery.">Use a long, unique password and keep it safe. There is no password recovery.</p>
+        <div class="field" id="protect-method-field">
+          <label for="protect-method" data-i18n="Generate with">Generate with</label>
+          <select id="protect-method" aria-describedby="passkey-help no-password-help">
+            <option value="create" data-i18n="Create passkey">Create passkey</option>
+            <option value="existing" data-i18n="Use existing passkey">Use existing passkey</option>
+            <option value="none" data-i18n="No password">No password</option>
+          </select>
+          <p id="passkey-help" class="hint" data-i18n="Creating another passkey does not unlock files protected with the original. Keep the original passkey or its recovery phrase.">Creating another passkey does not unlock files protected with the original. Keep the original passkey or its recovery phrase.</p>
+          <label id="backup-option" class="show-password"><input id="backup-enabled" type="checkbox" checked><span data-i18n="Show a recovery backup after protection (recommended)">Show a recovery backup after protection (recommended)</span></label>
+          <p class="hint" data-i18n="If Excel requires a password to open the source file, remove that password in Excel and save a copy before protecting it here.">If Excel requires a password to open the source file, remove that password in Excel and save a copy before protecting it here.</p>
         </div>
-        <div class="field" id="confirmation-field">
-          <label for="confirmation" data-i18n="Confirm password">Confirm password</label>
-          <input id="confirmation" type="password" autocomplete="new-password" required spellcheck="false" autocapitalize="none">
+        <div class="field" id="restore-method-field" hidden>
+          <label for="restore-method" data-i18n="Restore with">Restore with</label>
+          <select id="restore-method" disabled aria-describedby="no-password-help">
+            <option value="passkey" data-i18n="Passkey">Passkey</option>
+            <option value="recovery" data-i18n="Recovery phrase">Recovery phrase</option>
+            <option value="password" data-i18n="Legacy password">Legacy password</option>
+            <option value="none" data-i18n="No password">No password</option>
+          </select>
         </div>
+        <p id="no-password-help" class="hint" hidden data-i18n="No password or passkey is needed. Anyone with this workbook can restore the original; it is not confidential.">No password or passkey is needed. Anyone with this workbook can restore the original; it is not confidential.</p>
+        <div class="field" id="recovery-field" hidden>
+          <label for="recovery-phrase" data-i18n="24-word recovery phrase">24-word recovery phrase</label>
+          <textarea id="recovery-phrase" rows="5" dir="ltr" lang="en" autocomplete="off" spellcheck="false" autocapitalize="none" disabled aria-describedby="recovery-help"></textarea>
+          <p id="recovery-help" class="hint" data-i18n="Enter the 24 English words in order. This phrase unlocks files protected with its original passkey.">Enter the 24 English words in order. This phrase unlocks files protected with its original passkey.</p>
+        </div>
+        <div class="field" id="password-field" hidden>
+          <label for="password" data-i18n="Workbook password">Workbook password</label>
+          <input id="password" type="password" autocomplete="current-password" disabled aria-describedby="password-help" spellcheck="false" autocapitalize="none">
+          <label class="show-password"><input id="show-password" type="checkbox" disabled><span data-i18n="Show password">Show password</span></label>
+          <p id="password-help" class="hint" data-i18n="For older ExcelKey workbooks protected with a password.">For older ExcelKey workbooks protected with a password.</p>
+        </div>
+        <p class="hint" data-i18n="Files and encryption secrets stay in this browser. No accounts or uploads.">Files and encryption secrets stay in this browser. No accounts or uploads.</p>
         </div>
         </div>
       </fieldset>
@@ -207,15 +234,21 @@
         <a id="download" class="download" data-i18n="Download workbook">Download workbook</a>
       </div>
     </section>
+    <section id="recovery-backup" class="message" aria-labelledby="backup-title" hidden>
+      <h2 id="backup-title" data-i18n="Save your recovery phrase">Save your recovery phrase</h2>
+      <p data-i18n="Keep these 24 words somewhere private and safe. Anyone with them can restore your files. ExcelKey does not save them.">Keep these 24 words somewhere private and safe. Anyone with them can restore your files. ExcelKey does not save them.</p>
+      <p id="backup-phrase" dir="ltr" lang="en" tabindex="0"></p>
+      <button id="hide-backup" class="ghost" type="button" data-i18n="Hide and clear phrase">Hide and clear phrase</button>
+    </section>
     <details id="workbook-details">
       <summary data-i18n="What is synthetic, and what stays visible?">What is synthetic, and what stays visible?</summary>
       <p data-i18n="The clean workbook uses neutral worksheet names and retains original headers in row 1, dates, layout, basic number and date formats, and empty cells. Other text, names, emails and IDs are replaced consistently; generic text becomes synthetic labels. Name detection uses a header-based heuristic. Numbers use independent synthetic ranges.">The clean workbook uses neutral worksheet names and retains original headers in row 1, dates, layout, basic number and date formats, and empty cells. Other text, names, emails and IDs are replaced consistently; generic text becomes synthetic labels. Name detection uses a header-based heuristic. Numbers use independent synthetic ranges.</p>
       <p data-i18n="Original headers, dates, repetition and relationships intentionally stay visible. The synthetic workbook is not a guarantee of anonymity.">Original headers, dates, repetition and relationships intentionally stay visible. The synthetic workbook is not a guarantee of anonymity.</p>
-      <p data-i18n="An encrypted original is embedded inside the generated workbook. The same password restores the exact original file, and tamper detection rejects modified protected content. This is reversible encryption, not one-way hashing.">An encrypted original is embedded inside the generated workbook. The same password restores the exact original file, and tamper detection rejects modified protected content. This is reversible encryption, not one-way hashing.</p>
+      <p data-i18n="The same passkey or its recovery phrase restores the encrypted original. Modified protected content is rejected. Older password-protected ExcelKey files can still be restored with their password.">The same passkey or its recovery phrase restores the encrypted original. Modified protected content is rejected. Older password-protected ExcelKey files can still be restored with their password.</p>
       <p data-i18n="Keep the downloaded workbook intact. Editing or resaving it in Excel can prevent restoration. Restore the original before making changes.">Keep the downloaded workbook intact. Editing or resaving it in Excel can prevent restoration. Restore the original before making changes.</p>
       <p data-i18n="Original charts, pivots, macros, metadata, images, hyperlinks, comments and formulas are not carried into the visible output. Date formulas are frozen to their cached date values. These original features remain only in the encrypted original.">Original charts, pivots, macros, metadata, images, hyperlinks, comments and formulas are not carried into the visible output. Date formulas are frozen to their cached date values. These original features remain only in the encrypted original.</p>
       <p data-i18n="Generation always downloads synthetic.protected.xlsx, regardless of the original filename or format. Accepted inputs are .xlsx, .xlsm, .xltx, .xltm, .xls, .xlsb, .xlt and XML workbooks; restoration returns the original format and content.">Generation always downloads synthetic.protected.xlsx, regardless of the original filename or format. Accepted inputs are .xlsx, .xlsm, .xltx, .xltm, .xls, .xlsb, .xlt and XML workbooks; restoration returns the original format and content.</p>
-      <p data-i18n="Files are processed locally in your browser. Your password is not saved or uploaded. Large workbooks may take a moment.">Files are processed locally in your browser. Your password is not saved or uploaded. Large workbooks may take a moment.</p>
+      <p data-i18n="Files and encryption secrets stay in this browser. No accounts or uploads.">Files and encryption secrets stay in this browser. No accounts or uploads.</p>
     </details>
     <noscript><p class="message" data-i18n="Enable JavaScript to generate a synthetic workbook or restore an original workbook locally.">Enable JavaScript to generate a synthetic workbook or restore an original workbook locally.</p></noscript>
     <footer data-i18n="ExcelKey · Local synthetic workbooks">ExcelKey · Local synthetic workbooks</footer>

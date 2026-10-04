@@ -1,12 +1,21 @@
 import { Unzip, UnzipInflate, Zip, ZipDeflate, unzipSync } from 'fflate';
 import { SaxesParser } from 'saxes';
 import type { SaxesTagNS } from 'saxes';
+import { expand } from '@noble/hashes/hkdf.js';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { validateCanonicalRpId } from './namespace';
+
+export type WorkbookKey = string | { masterPrk: Uint8Array; namespace: string } | null;
 
 export const MAX_FILE_BYTES = 64 * 1024 * 1024;
 const MAX_INFLATED_BYTES = 256 * 1024 * 1024;
 const TYPE = 'urn:excelkey:protected-workbook:v2';
+const TYPE_V3 = 'urn:excelkey:protected-workbook:v3';
+const TYPE_V4 = 'urn:excelkey:protected-workbook:v4';
 const CONTENT_TYPE = 'application/vnd.excelkey.protected-workbook+json';
 const CORRUPT = 'Incorrect password, or protected workbook is damaged or modified.';
+const CORRUPT_V3 = 'Incorrect passkey or recovery phrase, or protected workbook is damaged or modified.';
+const CORRUPT_V4 = 'Protected workbook is damaged or modified.';
 const SS = new Set(['http://schemas.openxmlformats.org/spreadsheetml/2006/main', 'http://purl.oclc.org/ooxml/spreadsheetml/main']);
 const REL = new Set(['http://schemas.openxmlformats.org/package/2006/relationships', 'http://purl.oclc.org/ooxml/package/relationships']);
 const OFFICE = ['http://schemas.openxmlformats.org/officeDocument/2006/relationships/', 'http://purl.oclc.org/ooxml/officeDocument/relationships/'];
@@ -16,7 +25,7 @@ type Entries = Record<string, Uint8Array>;
 type Node = { tag: SaxesTagNS; start: number; openEnd: number; end: number; parent?: Node; text?: string };
 type Edit = { start: number; end: number; text: string };
 type Relationship = { id: string; type: string; target: string; external: boolean; node: Node };
-type Manifest = { version: 2; digest: string; cells: number; sheets: number; filename?: string };
+type Manifest = { version: 2 | 3 | 4; digest: string; cells: number; sheets: number; filename?: string };
 
 function fail(message: string): never { throw new Error(message); }
 function attr(node: Node, name: string): string | undefined { return node.tag.attributes[name]?.value; }
@@ -183,14 +192,18 @@ function resolve(source: string, target: string): string {
   } catch { fail('Invalid package target.'); }
 }
 function relPath(path: string): string { const slash = path.lastIndexOf('/'); return `${path.slice(0, slash + 1)}_rels/${path.slice(slash + 1)}.rels`; }
-function metadata(entries: Entries): string | undefined {
-  const matches = relationships(entries, '_rels/.rels').filter(r => r.type === TYPE);
+function metadata(entries: Entries): { path: string; version: 2 | 3 | 4 } | undefined {
+  const matches = relationships(entries, '_rels/.rels').filter(r => r.type.startsWith('urn:excelkey:protected-workbook:'));
   if (!matches.length) return undefined;
   if (matches.length !== 1 || matches[0]!.external) fail(CORRUPT);
-  return resolve('', matches[0]!.target);
+  const rel = matches[0]!;
+  if (rel.type !== TYPE && rel.type !== TYPE_V3 && rel.type !== TYPE_V4) fail('Unsupported protected workbook version.');
+  return { path: resolve('', rel.target), version: rel.type === TYPE ? 2 : rel.type === TYPE_V3 ? 3 : 4 };
 }
 /** Detect the v2 root relationship, including a dangling metadata reference. */
-export function hasV2Protection(input: Uint8Array): boolean { return metadata(checkedZip(input)) !== undefined; }
+export function hasV2Protection(input: Uint8Array): boolean { return metadata(checkedZip(input))?.version === 2; }
+/** Detect supported protection before any synthetic conversion, including dangling metadata. */
+export function hasWorkbookProtection(input: Uint8Array): boolean { return metadata(checkedZip(input)) !== undefined; }
 
 function base64(bytes: Uint8Array): string {
   const chunks: string[] = [];
@@ -207,7 +220,16 @@ async function digest(entries: Entries, excluded: string): Promise<string> {
   for (const path of Object.keys(entries).sort()) if (path !== excluded) list.push([path, entries[path]!.length, await hash(entries[path]!)]);
   return hash(encoder.encode(JSON.stringify(list)));
 }
-async function keyFor(password: string, salt: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
+async function keyFor(password: WorkbookKey, salt: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
+  // ponytail: embedded v4 key offers no confidentiality/authenticity against deliberate changes; use secret-based modes when needed.
+  if (password === null) return crypto.subtle.importKey('raw', salt, 'AES-GCM', false, ['encrypt', 'decrypt']);
+  if (typeof password !== 'string') {
+    // masterPrk is already an HKDF PRK. JSON frames the namespace and per-file salt unambiguously.
+    const info = encoder.encode(JSON.stringify(['EXCELKEY-v3/workbook-key', password.namespace, base64(salt)]));
+    const raw = expand(sha256, password.masterPrk, info, 32);
+    try { return await crypto.subtle.importKey('raw', new Uint8Array(raw), 'AES-GCM', false, ['encrypt', 'decrypt']); }
+    finally { raw.fill(0); }
+  }
   const material = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveKey']);
   return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 600_000, hash: 'SHA-256' }, material, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
 }
@@ -344,30 +366,44 @@ function protectSheets(entries: Entries): { cells: number; sheets: number } {
 
 /** Encrypt the original snapshot; protect worksheet values while retaining opaque feature parts. */
 export async function transformOoxml(
-  input: Uint8Array, password: string, mode: 'protect' | 'restore',
+  input: Uint8Array, password: WorkbookKey, mode: 'protect' | 'restore',
   options: { original?: Uint8Array; filename?: string; syntheticCounts?: { cells: number; sheets: number } } = {},
 ): Promise<{ data: Uint8Array; cells: number; sheets: number; filename?: string }> {
   if (mode !== 'protect' && mode !== 'restore') fail('Choose protect or restore.');
-  if (!password) fail('Enter a password.');
+  if (password !== null && !password) fail('Enter a password.');
+  if (password !== null && typeof password !== 'string') {
+    if (!(password.masterPrk instanceof Uint8Array) || password.masterPrk.length !== 32) fail('Workbook masterPrk must be 32 bytes.');
+    if (typeof password.namespace !== 'string') fail('Invalid workbook namespace.');
+    validateCanonicalRpId(password.namespace);
+  }
+  const version = password === null ? 4 : typeof password === 'string' ? 2 : 3;
+  const type = version === 2 ? TYPE : version === 3 ? TYPE_V3 : TYPE_V4;
+  const corrupt = version === 2 ? CORRUPT : version === 3 ? CORRUPT_V3 : CORRUPT_V4;
   const entries = checkedZip(input);
   const existing = metadata(entries);
+  if (mode === 'restore' && existing && existing.version !== version) fail(existing.version === 2 ? 'This workbook requires a password.' : existing.version === 3 ? 'This workbook requires a passkey or recovery phrase.' : 'This workbook requires no password. Select No password to restore it.');
   if (mode === 'restore') {
     try {
-      if (!existing || !entries[existing]) fail(CORRUPT);
-      const envelope = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(entries[existing]));
-      if (envelope.version !== 2) fail(CORRUPT);
-      const salt = unbase64(envelope.salt), nonce = unbase64(envelope.nonce), ciphertext = unbase64(envelope.ciphertext);
-      if (salt.length !== 16 || nonce.length !== 12 || ciphertext.length < 20) fail(CORRUPT);
-      const plain = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: nonce, additionalData: encoder.encode(JSON.stringify([TYPE, existing])) }, await keyFor(password, salt), ciphertext));
+      if (!existing || !entries[existing.path]) fail(corrupt);
+      const path = existing.path;
+      const envelope = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(entries[path]));
+      if (envelope.version !== version) fail(corrupt);
+      if (password === null && Object.keys(envelope).sort().join(',') !== 'ciphertext,key,nonce,version') fail(corrupt);
+      if (password !== null && typeof password !== 'string' && (envelope.namespace !== password.namespace
+        || Object.keys(envelope).sort().join(',') !== 'ciphertext,namespace,nonce,salt,version')) fail(corrupt);
+      const salt = unbase64(password === null ? envelope.key : envelope.salt), nonce = unbase64(envelope.nonce), ciphertext = unbase64(envelope.ciphertext);
+      if (salt.length !== (password === null ? 32 : 16) || nonce.length !== 12 || ciphertext.length < 20) fail(corrupt);
+      const context = password === null ? [TYPE_V4, path] : typeof password === 'string' ? [TYPE, path] : [TYPE_V3, path, 3, password.namespace, envelope.salt];
+      const plain = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: nonce, additionalData: encoder.encode(JSON.stringify(context)) }, await keyFor(password, salt), ciphertext));
       const length = new DataView(plain.buffer).getUint32(0);
       if (length > 65536 || length + 4 > plain.length) fail(CORRUPT);
       const manifest: Manifest = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(plain.subarray(4, 4 + length)));
-      if (manifest.version !== 2 || !Number.isSafeInteger(manifest.cells) || manifest.cells < 0 || !Number.isSafeInteger(manifest.sheets) || manifest.sheets < 0
-        || manifest.filename !== undefined && typeof manifest.filename !== 'string' || manifest.digest !== await digest(entries, existing)) fail(CORRUPT);
+      if (manifest.version !== version || !Number.isSafeInteger(manifest.cells) || manifest.cells < 0 || !Number.isSafeInteger(manifest.sheets) || manifest.sheets < 0
+        || manifest.filename !== undefined && typeof manifest.filename !== 'string' || manifest.digest !== await digest(entries, path)) fail(CORRUPT);
       const data = plain.slice(4 + length);
       if (data.length > MAX_FILE_BYTES) fail(CORRUPT);
       return { data, cells: manifest.cells, sheets: manifest.sheets, filename: manifest.filename };
-    } catch { fail(CORRUPT); }
+    } catch { fail(corrupt); }
   }
   if (existing) fail('Workbook is already protected.');
   const original = options.original ?? input;
@@ -379,17 +415,18 @@ export async function transformOoxml(
   scan(xml(entries['[Content_Types].xml']!).text, node => { if (node.tag.local === 'Override' && node.tag.uri === CT) overrides.add(attr(node, 'PartName') ?? ''); });
   do { path = `excelkey/${base64(crypto.getRandomValues(new Uint8Array(12))).replace(/[+/]/g, '_')}.json`; } while (entries[path] || overrides.has('/' + path));
   const rootRels = relationships(entries, '_rels/.rels');
-  let id = 'ExcelKeyV2';
+  let id = `ExcelKeyV${version}`;
   while (rootRels.some(r => r.id === id)) id += '_';
-  insert(entries, '_rels/.rels', root => `<${element(root, 'Relationship')} Id="${id}" Type="${TYPE}" Target="/${path}"/>`);
+  insert(entries, '_rels/.rels', root => `<${element(root, 'Relationship')} Id="${id}" Type="${type}" Target="/${path}"/>`);
   insert(entries, '[Content_Types].xml', root => `<${element(root, 'Override')} PartName="/${path}" ContentType="${CONTENT_TYPE}"/>`);
-  const manifest: Manifest = { version: 2, digest: await digest(entries, path), ...counts, ...(options.filename === undefined ? {} : { filename: options.filename }) };
+  const manifest: Manifest = { version, digest: await digest(entries, path), ...counts, ...(options.filename === undefined ? {} : { filename: options.filename }) };
   const header = encoder.encode(JSON.stringify(manifest));
   const plain = new Uint8Array(4 + header.length + original.length);
   new DataView(plain.buffer).setUint32(0, header.length); plain.set(header, 4); plain.set(original, 4 + header.length);
-  const salt = crypto.getRandomValues(new Uint8Array(16)), nonce = crypto.getRandomValues(new Uint8Array(12));
-  const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce, additionalData: encoder.encode(JSON.stringify([TYPE, path])) }, await keyFor(password, salt), plain));
-  entries[path] = encoder.encode(JSON.stringify({ version: 2, salt: base64(salt), nonce: base64(nonce), ciphertext: base64(ciphertext) }));
+  const salt = crypto.getRandomValues(new Uint8Array(password === null ? 32 : 16)), nonce = crypto.getRandomValues(new Uint8Array(12));
+  const context = password === null ? [TYPE_V4, path] : typeof password === 'string' ? [TYPE, path] : [TYPE_V3, path, 3, password.namespace, base64(salt)];
+  const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce, additionalData: encoder.encode(JSON.stringify(context)) }, await keyFor(password, salt), plain));
+  entries[path] = encoder.encode(JSON.stringify({ version, ...(password === null ? { key: base64(salt) } : { ...(typeof password === 'string' ? {} : { namespace: password.namespace }), salt: base64(salt) }), nonce: base64(nonce), ciphertext: base64(ciphertext) }));
   const data = pack(entries);
   // Expanded output must satisfy the same limits used on the next restore.
   checkedZip(data);

@@ -1,7 +1,7 @@
 {
   "name": "ExcelKey",
   "short_name": "ExcelKey",
-  "description": "Password-protect Excel values locally. Keep headers readable and restore values with your password.",
+  "description": "Protect Excel workbooks locally with a passkey. Restore originals with the same passkey or recovery phrase. No accounts or uploads.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

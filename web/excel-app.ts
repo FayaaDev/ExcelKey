@@ -1,12 +1,21 @@
 import { EXCEL_EXTENSIONS, MAX_FILE_BYTES, transformWorkbook } from '../src/excel';
+import { masterPrkFromPrfSecret } from '../src/identity';
+import { decodeRecoveryBip39, encodeRecoveryBip39 } from '../src/recovery';
+import { checkSupport, deploymentRpId, enrollPasskey, getPrfSecret, prfBrowserSupport } from './webauthn';
 import { translations } from './excel-i18n';
 
 const form = document.querySelector<HTMLFormElement>('#workbook-form')!;
 const controls = document.querySelector<HTMLFieldSetElement>('#controls')!;
 const fileInput = document.querySelector<HTMLInputElement>('#workbook')!;
 const password = document.querySelector<HTMLInputElement>('#password')!;
-const confirmation = document.querySelector<HTMLInputElement>('#confirmation')!;
 const showPassword = document.querySelector<HTMLInputElement>('#show-password')!;
+const protectMethod = document.querySelector<HTMLSelectElement>('#protect-method')!;
+const restoreMethod = document.querySelector<HTMLSelectElement>('#restore-method')!;
+const recoveryPhrase = document.querySelector<HTMLTextAreaElement>('#recovery-phrase')!;
+const backupEnabled = document.querySelector<HTMLInputElement>('#backup-enabled')!;
+const recoveryBackup = document.querySelector<HTMLElement>('#recovery-backup')!;
+const backupPhrase = document.querySelector<HTMLElement>('#backup-phrase')!;
+const hideBackup = document.querySelector<HTMLButtonElement>('#hide-backup')!;
 const submit = document.querySelector<HTMLButtonElement>('#submit')!;
 const status = document.querySelector<HTMLElement>('#status')!;
 const error = document.querySelector<HTMLElement>('#error')!;
@@ -20,6 +29,10 @@ const menuToggle = document.querySelector<HTMLButtonElement>('#menu-toggle')!;
 const menu = document.querySelector<HTMLElement>('#app-menu')!;
 let downloadUrl: string | undefined;
 let busy = false;
+let activeRoot: Uint8Array | undefined;
+let pageRevision = 0;
+const cryptoAvailable = window.isSecureContext && !!globalThis.crypto?.subtle;
+try { if (localStorage.getItem('excelkey-passkey-used') === 'true') protectMethod.value = 'existing'; } catch { /* A preference, never a secret. */ }
 const languageToggle = document.querySelector<HTMLButtonElement>('#language-toggle')!;
 let language = 'en';
 try { language = localStorage.getItem('excelkey-language') === 'ar' ? 'ar' : 'en'; } catch { /* Storage can be unavailable. */ }
@@ -127,54 +140,129 @@ function clearResult(): void {
 }
 
 function mode(): 'protect' | 'restore' {
-  return new FormData(form).get('mode') === 'restore' ? 'restore' : 'protect';
+  return document.querySelector<HTMLInputElement>('input[name=mode]:checked')?.value === 'restore' ? 'restore' : 'protect';
 }
+
+function clearBackup(): void {
+  backupPhrase.textContent = '';
+  recoveryBackup.hidden = true;
+}
+
+function clearSecrets(): void {
+  activeRoot?.fill(0);
+  activeRoot = undefined;
+  password.value = recoveryPhrase.value = '';
+  showPassword.checked = false;
+  password.type = 'password';
+  clearBackup();
+}
+
+function updateMethod(): void {
+  const protect = mode() === 'protect';
+  const legacy = !protect && restoreMethod.value === 'password';
+  const recovery = !protect && restoreMethod.value === 'recovery';
+  const noPassword = (protect ? protectMethod : restoreMethod).value === 'none';
+  document.querySelector<HTMLElement>('#passkey-help')!.hidden = !protect || noPassword;
+  document.querySelector<HTMLElement>('#no-password-help')!.hidden = !noPassword;
+  document.querySelector<HTMLElement>('#protect-method-field')!.hidden = !protect;
+  document.querySelector<HTMLElement>('#restore-method-field')!.hidden = protect;
+  protectMethod.disabled = !protect;
+  restoreMethod.disabled = protect;
+  document.querySelector<HTMLElement>('#password-field')!.hidden = !legacy;
+  document.querySelector<HTMLElement>('#recovery-field')!.hidden = !recovery;
+  password.disabled = showPassword.disabled = !legacy;
+  password.required = legacy;
+  recoveryPhrase.disabled = !recovery;
+  recoveryPhrase.required = recovery;
+  const setup = protect && protectMethod.value === 'create';
+  document.querySelector<HTMLElement>('#backup-option')!.hidden = !setup;
+  backupEnabled.disabled = !setup;
+  let action = 'Restore with passkey';
+  if (protect) action = setup ? 'Create passkey' : 'Protect with passkey';
+  else if (legacy) action = 'Restore with password';
+  else if (recovery) action = 'Restore with recovery phrase';
+  if (noPassword) action = protect ? 'Generate without password' : 'Restore without password';
+  setText(submit, action);
+  setText(document.querySelector<HTMLElement>('#dock-title')!, protect ? 'Generate synthetic workbook' : 'Restore original workbook');
+}
+
+hideBackup.addEventListener('click', () => {
+  clearBackup();
+  download.focus({ preventScroll: true });
+});
 
 form.addEventListener('change', event => {
   if (busy) return;
-  if ((event.target as HTMLInputElement).name === 'mode') {
-    const protect = mode() === 'protect';
+  if ((event.target as HTMLInputElement).name === 'mode' || event.target === protectMethod || event.target === restoreMethod) {
     workflow.hidden = dock.hidden = false;
-    document.querySelector<HTMLElement>('#confirmation-field')!.hidden = !protect;
-    confirmation.required = protect;
-    confirmation.disabled = !protect;
-    password.autocomplete = protect ? 'new-password' : 'current-password';
-    setText(document.querySelector<HTMLElement>('#password-label')!, protect ? 'Create a password' : 'Workbook password');
-    setText(submit, protect ? 'Generate synthetic workbook' : 'Restore workbook');
-    setText(document.querySelector<HTMLElement>('#dock-title')!, protect ? 'Generate synthetic workbook' : 'Restore original workbook');
-    submit.disabled = controls.disabled;
-    password.value = confirmation.value = '';
+    updateMethod();
+    submit.disabled = !cryptoAvailable;
+    clearSecrets();
     clearResult();
   } else if (event.target === fileInput) {
+    clearSecrets();
     clearResult();
     updateFile();
   }
 });
 
 showPassword.addEventListener('change', () => {
-  password.type = confirmation.type = showPassword.checked ? 'text' : 'password';
+  password.type = showPassword.checked ? 'text' : 'password';
 });
 
 form.addEventListener('submit', async event => {
   event.preventDefault();
   if (busy) return;
   clearResult();
+  clearBackup();
   const operation = mode();
   const file = fileInput.files?.[0];
+  const revision = pageRevision;
+  const setup = operation === 'protect' && protectMethod.value === 'create';
+  const noPassword = (operation === 'protect' ? protectMethod : restoreMethod).value === 'none';
+  const showBackup = setup && backupEnabled.checked;
+  let passkeyPending = false;
   try {
+    if (!cryptoAvailable) throw new Error('Open ExcelKey over HTTPS or localhost to use encryption.');
     if (!file || !EXCEL_EXTENSIONS.test(file.name)) throw new Error('Choose an Excel workbook.');
     if (file.size > MAX_FILE_BYTES) throw new Error('Choose a workbook smaller than 64 MiB.');
-    if (!password.value) throw new Error('Enter a password.');
-    if (operation === 'protect' && password.value !== confirmation.value) {
-      confirmation.focus();
-      throw new Error('Passwords do not match. Enter the same password in both fields.');
-    }
     busy = true;
     controls.disabled = true;
     submit.disabled = changeFile.disabled = true;
     form.setAttribute('aria-busy', 'true');
+    const legacy = operation === 'restore' && restoreMethod.value === 'password';
+    if (legacy) {
+      if (!password.value) throw new Error('Enter a password.');
+    } else if (operation === 'restore' && restoreMethod.value === 'recovery') {
+      try { activeRoot = decodeRecoveryBip39(recoveryPhrase.value.toLowerCase()); }
+      catch { throw new Error('Invalid recovery phrase. Enter all 24 English words in order and check their spelling.'); }
+      recoveryPhrase.value = '';
+    } else if (!noPassword) {
+      passkeyPending = true;
+      if (!checkSupport().webauthn) throw new Error('This browser does not support passkeys. Use a supported browser, or restore with a recovery phrase or legacy password.');
+      if (await prfBrowserSupport() === false) throw new Error('This browser or passkey provider does not support PRF encryption. Try another provider or browser, or restore with your recovery phrase.');
+      if (revision !== pageRevision) return;
+      setText(status, setup ? 'Create a passkey, then verify it to protect this workbook.' : 'Choose your original passkey and verify to continue.');
+      const credentialId = setup ? await enrollPasskey('ExcelKey') : undefined;
+      if (revision !== pageRevision) return;
+      const secret = await getPrfSecret(credentialId);
+      try {
+        if (revision !== pageRevision) return;
+        activeRoot = masterPrkFromPrfSecret(secret);
+      } finally { secret.fill(0); }
+      passkeyPending = false;
+      protectMethod.value = 'existing';
+      try { localStorage.setItem('excelkey-passkey-used', 'true'); } catch { /* Only remember the preferred action. */ }
+    }
     setText(status, operation === 'protect' ? 'Generating synthetic workbook… Keep this tab open.' : 'Restoring workbook… Keep this tab open.');
-    const transformed = await transformWorkbook(new Uint8Array(await file.arrayBuffer()), password.value, operation, { filename: file.name });
+    const input = new Uint8Array(await file.arrayBuffer());
+    if (revision !== pageRevision) return;
+    const transformed = await transformWorkbook(input, noPassword ? null : legacy ? password.value : { masterPrk: activeRoot!, namespace: deploymentRpId() }, operation, { filename: file.name });
+    if (revision !== pageRevision) return;
+    if (showBackup) {
+      backupPhrase.textContent = encodeRecoveryBip39(activeRoot!);
+      recoveryBackup.hidden = false;
+    }
     downloadUrl = URL.createObjectURL(new Blob([new Uint8Array(transformed.data)], {
       type: 'application/octet-stream',
     }));
@@ -190,36 +278,60 @@ form.addEventListener('submit', async event => {
       ? `أُنشئت تشفيرة ببيانات اصطناعية في ${transformed.sheets.toLocaleString('en')} أوراق عمل. تبقى العناوين الأصلية في الصف 1 والتواريخ ظاهرة، وتُضمّن النسخة الأصلية المشفّرة داخلها.`
       : `استُعيدت ${transformed.cells.toLocaleString('en')} خلايا في ${transformed.sheets.toLocaleString('en')} أوراق عمل.`);
     result.hidden = false;
-    setText(status, 'Your workbook is ready to download.');
+    setText(status, showBackup ? 'Your workbook is ready. Save your recovery phrase below before leaving.' : 'Your workbook is ready to download.');
     download.focus({ preventScroll: true });
     download.scrollIntoView({ block: 'center' });
   } catch (cause) {
+    clearSecrets();
+    if (revision !== pageRevision) return;
     setText(status, '');
-    const message = cause instanceof Error ? cause.message : 'Could not process this workbook. Check the file and try again.';
-    setText(error, message, translations[message] ?? translations['Could not process this workbook. Check the file and try again.']);
+    let message = cause instanceof Error ? cause.message : '';
+    if (passkeyPending && cause instanceof Error && ['NotAllowedError', 'AbortError'].includes(cause.name)) {
+      message = 'Passkey request was cancelled or timed out. Try again and choose the original passkey.';
+    } else if (passkeyPending && /PRF|authenticator/i.test(message) && !translations[message]) {
+      message = 'This browser or passkey provider does not support PRF encryption. Try another provider or browser, or restore with your recovery phrase.';
+    } else if (passkeyPending && !translations[message]) {
+      message = 'Could not use this passkey. Try again with a supported browser and passkey provider.';
+    } else if (message.startsWith('Could not read this Excel file:')) {
+      const reason = message.slice('Could not read this Excel file: '.length);
+      message = translations[reason] ? reason : 'Could not read this Excel file. Check that it is a valid, unencrypted workbook.';
+      if (/password|encrypt/i.test(reason)) {
+        message = 'This source workbook requires an Excel password. Remove its password in Excel and save a copy before protecting it here.';
+      }
+    } else if (message === 'This workbook requires a password.') {
+      message = 'This workbook requires a password. Select Legacy password to restore it.';
+    } else if (message === 'This workbook requires a passkey or recovery phrase.') {
+      message = 'This workbook requires a passkey or recovery phrase. Change the restore method.';
+    }
+    if (!translations[message]) message = 'Could not process this workbook. Check the file and try again.';
+    setText(error, message);
     error.hidden = false;
   } finally {
-    if (busy) {
-      password.value = confirmation.value = '';
-      showPassword.checked = false;
-      password.type = confirmation.type = 'password';
-    }
+    activeRoot?.fill(0);
+    activeRoot = undefined;
+    password.value = recoveryPhrase.value = '';
+    showPassword.checked = false;
+    password.type = 'password';
     busy = false;
-    controls.disabled = false;
-    submit.disabled = changeFile.disabled = false;
+    controls.disabled = !cryptoAvailable;
+    submit.disabled = changeFile.disabled = !cryptoAvailable;
+    updateMethod();
     form.removeAttribute('aria-busy');
   }
 });
 
-if (window.isSecureContext && crypto.subtle) {
+updateMethod();
+if (cryptoAvailable) {
   controls.disabled = false;
   setText(status, '');
 } else {
-  setText(status, 'Open ExcelKey over HTTPS or localhost to use password encryption.');
+  setText(status, 'Open ExcelKey over HTTPS or localhost to use encryption.');
 }
 
 window.addEventListener('pagehide', () => {
-  password.value = confirmation.value = '';
+  pageRevision++;
+  clearSecrets();
+  clearResult();
 });
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {
