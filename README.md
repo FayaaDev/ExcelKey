@@ -1,65 +1,73 @@
 # ExcelKey
 
-Generate a clean synthetic Excel workbook locally in your browser, with an encrypted original embedded inside. **Original headers in row 1 and dates remain visible on every worksheet.** The same password restores the exact original file. This uses reversible encryption, not hashing.
+Create a clean synthetic Excel workbook entirely in the browser. The generated workbook keeps a reversible, encrypted copy of the exact original, which can be restored with the same passkey, its recovery phrase, or the legacy password used for older files. No account, upload, or server-side processing is required.
 
-## Run
+## Run locally
 
-Requires Bun:
+Requires [Bun](https://bun.sh/):
 
 ```sh
-cd reference
 bun install
 bun run build
 bun run serve
 ```
 
-Open `http://localhost:8787`. Deploy over HTTPS outside localhost; Web Crypto requires a secure context.
+Open `http://localhost:8787`. Use HTTPS outside localhost: Web Crypto and passkeys require a secure context.
 
 ## Generate and restore
 
-1. Choose **Generate synthetic workbook**, select an Excel workbook, and enter and confirm a password.
-2. Download `synthetic.protected.xlsx`. Generation always outputs `.xlsx` with this neutral filename, regardless of the original filename or format. The original workbook is not overwritten.
-3. Choose **Restore values**, select the generated workbook, and enter the original password.
-4. Download the restored original using its original filename base and extension with a `.restored` suffix (for example, `name.restored.xlsm`).
+1. Select **Generate**, choose an Excel workbook, then choose a protection method:
+   - **Create passkey** creates an ExcelKey passkey and can display a 24-word recovery phrase.
+   - **Use existing passkey** uses the original ExcelKey passkey.
+   - **No password** makes a non-confidential workbook that anyone holding it can restore.
+2. Download `synthetic.protected.xlsx`. Generation always creates an `.xlsx` file with this neutral name; it never overwrites the source file.
+3. To restore, select **Restore**, choose the protected workbook, and select the matching method: passkey, recovery phrase, legacy password, or no password.
+4. Download the original filename with a `.restored` suffix, such as `name.restored.xlsm`.
 
-The mode/API identifiers remain `protect` and `restore`.
+Keep the original and, when used, its passkey or recovery phrase. ExcelKey cannot recover a lost passkey, recovery phrase, or legacy password.
 
-Keep a copy of the original and keep your password safe. There is no password recovery. Passwords are not saved or uploaded. Processing happens entirely in the browser.
+## What the synthetic workbook contains
 
-## Scope and limits
+- All worksheets are processed, including hidden sheets. Row 1 is treated as the header row.
+- Neutral worksheet names, original headers, dates, layout, basic number/date formats, merged cells, and empty cells remain visible.
+- Text, names, emails, IDs, numeric values, and booleans are replaced consistently within a run. Name detection is header-based; generic text becomes synthetic labels.
+- Integers use 1-1,000, decimals use 0.01-1,000, and percentages use 0.01-1. Values sharing a field header map consistently across worksheets.
+- Dates are identified by Excel date/time formats, date-like headers, and recognizable ISO date strings. The 1900/1904 date system is retained. A date formula without a cached value must be recalculated and saved before generation.
+- Original headers, dates, repeated values, and relationships intentionally remain visible. Synthetic output is not a guarantee of anonymity.
+- Charts, pivots, macros, metadata, images, hyperlinks, comments, styles beyond basic formats, and formulas are not carried into the visible workbook. The encrypted original retains them byte-for-byte.
 
-- All worksheets are processed, including hidden sheets. Row 1 is always the header row.
-- The clean visible workbook uses neutral worksheet names. Original headers in row 1, dates, layout, basic number and date formats, and empty cells are retained.
-- Other text, names, emails and IDs are replaced consistently. Generic text maps to synthetic labels; name detection is a header-based heuristic. Numbers use independent synthetic ranges rather than preserving original numeric values.
-- Integers use 1–1,000; decimals use 0.01–1,000; percentages use 0.01–1. Matching field headers share replacement mappings across sheets. Mappings are fresh for each run.
-- Excel date/time formats and date-column headers identify dates. Recognizable ISO date strings are retained too. Basic date formats and the 1900/1904 date system are preserved; custom formats containing literal text are normalized to avoid leaking that text. Date formulas without cached results must be recalculated and saved before generation.
-- Original headers, dates, repetition and relationships intentionally remain visible. Synthetic output is not a guarantee of anonymity.
-- Original charts, pivots, macros, metadata, images, hyperlinks, comments and formulas are not carried into the visible output. Date formulas are frozen to their cached date values. Original features are retained in the encrypted original, rather than rejected solely because they exist.
-- Accepted inputs: `.xlsx`, `.xlsm`, `.xltx`, `.xltm`, `.xls`, `.xlsb`, `.xlt` and XML workbooks. Generation always produces `.xlsx`; v2 restoration returns the exact original bytes and format, including features omitted from the synthetic view.
-- Current limits: 64 MiB compressed input/output, 256 MiB inflated OOXML content and 10,000 ZIP entries. The embedded encrypted original increases output size.
-- Keep the generated workbook intact. Editing or resaving it in Excel can prevent restoration. Tamper detection rejects modified protected content instead of returning partial output; restore the original before making changes.
+Accepted inputs are `.xlsx`, `.xlsm`, `.xltx`, `.xltm`, `.xls`, `.xlsb`, `.xlt`, and XML workbooks. Source workbooks protected with an Excel password must be unlocked and saved before generation.
 
-## Security format
+## Limits and safety
 
-The workbook transformations use browser Web Crypto: PBKDF2-HMAC-SHA-256 with 600,000 iterations and a random 16-byte workbook salt, followed by AES-256-GCM. The v2 format embeds the encrypted original and an authenticated manifest that verifies the generated workbook's integrity before releasing the original.
+- Input and protected-workbook compressed size limit: 64 MiB.
+- OOXML validation limits: 256 MiB inflated content and 10,000 ZIP entries.
+- Keep generated workbooks intact. Editing or resaving one can make it impossible to restore. Modified protected content is rejected rather than partly restored.
+- Files and encryption secrets remain in the browser. Passwords, recovery phrases, and passkey-derived keys are not uploaded or saved by ExcelKey.
 
-Missing protection metadata, wrong passwords and tampering fail restoration. ZIP size/part checks run before workbook parsing. Password strength matters because anyone holding a generated workbook can try password guesses offline.
+## Protection formats
 
-### Restore compatibility
+New workbooks support three formats:
 
-Restoration supports both legacy v1 protected workbooks and v2 workbooks. New generation uses v2. V2 restores the embedded original byte-for-byte; v1 restores its authenticated cell values through the legacy path and does not promise byte-identical recovery or an embedded original filename. V1's 20 MiB compressed and 100 MiB inflated limits and feature restrictions apply only to that legacy restore path, not current generation.
+- **Passkey / recovery phrase:** a WebAuthn PRF passkey derives a root key; the 24-word recovery phrase encodes the same root key. Either restores the original.
+- **No password:** a random AES-256-GCM key is embedded in the workbook. It detects accidental modification but provides no confidentiality.
+- **Legacy password:** older workbooks use PBKDF2-HMAC-SHA-256 with 600,000 iterations and AES-256-GCM. This option exists only for restoration.
+
+Protected workbooks authenticate both the encrypted original and the visible synthetic package. Anyone with a protected workbook can make offline guesses against a legacy password, so use a strong one. Passkey protection requires a browser and authenticator that support the WebAuthn PRF extension.
 
 ## Development
 
 ```sh
-cd reference
 bun test
 bun run build
+bun run serve
 ```
 
-- `reference/src/excel.ts`: workbook/password transformations.
-- `reference/web/excel-app.ts`: browser workflow.
-- `reference/web/index.html`: accessible form and states.
-- `reference/test/excel.test.ts`: round-trip, malformed-input and tampering tests.
+- `src/excel.ts`: workbook detection and generate/restore entry point.
+- `src/excel-synthetic.ts`: visible synthetic workbook generation.
+- `src/excel-ooxml.ts`: protected-workbook packaging, encryption, and integrity checks.
+- `web/index.html` and `web/excel-app.ts`: workbook browser workflow.
+- `test/`: unit and round-trip coverage.
+- `e2e/`: deployed-app and browser interoperability checks; see `e2e/README.md`.
 
-The original generic ExcelKey cryptography remains available under `reference/src/`; its documentation is in `reference/FILEKEY.md`. The main UI now uses ExcelKey's password workflow, not ExcelKey passkeys or `.filekey` files. Licensed under GPL-3.0-or-later; see `LICENSE`.
+The repository also contains the reusable ExcelKey passkey encryption core in `src/` and its generic file UI in `web/app.ts`. Licensed under GPL-3.0-or-later; see `LICENSE`.
